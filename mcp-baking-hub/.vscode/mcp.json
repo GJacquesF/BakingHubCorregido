@@ -1,0 +1,27 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "baking-hub-admin-email",
+      "description": "Correo de una cuenta administradora de Baking Hub"
+    },
+    {
+      "type": "promptString",
+      "id": "baking-hub-admin-password",
+      "description": "Contraseña de la cuenta administradora",
+      "password": true
+    }
+  ],
+  "servers": {
+    "tienda": {
+      "type": "stdio",
+      "command": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+      "args": ["${workspaceFolder}\\server.py"],
+      "env": {
+        "GRAPHQL_URL": "https://baking-hub-backend.onrender.com/",
+        "MCP_ADMIN_EMAIL": "${input:baking-hub-admin-email}",
+        "MCP_ADMIN_PASSWORD": "${input:baking-hub-admin-password}"
+      }
+    }
+  }
+}
