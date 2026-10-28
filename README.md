@@ -12,6 +12,7 @@
 - **Autenticación y autorización:** contraseñas almacenadas mediante hash, sesión basada en JWT y cookie `HttpOnly`.
 - **Checkout:** flujo de compra que requiere autenticación.
 - **Métodos de pago:** integración con Mercado Pago para tarjeta, efectivo en OXXO, transferencia SPEI y billetera de Mercado Pago, según la configuración.
+- **Mapa de entregas:** el administrador marca puntos de entrega en un mapa (Leaflet + OpenStreetMap, sin API key) y el cliente elige uno en el checkout; el pedido guarda una copia de la dirección.
 - **Pedidos:** consulta del historial y del estado de los pedidos.
 - **Inventario:** reserva y devolución de existencias según el estado del pedido.
 - **Panel de administración:** administración de productos, inventario y clientes, además de un resumen de actividad.

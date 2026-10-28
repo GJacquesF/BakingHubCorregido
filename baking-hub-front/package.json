@@ -11,18 +11,20 @@
   },
   "dependencies": {
     "@astrojs/netlify": "^8.2.10",
-    "@astrojs/react": "^7.0.0",
+    "@astrojs/react": "^7.1.1",
     "@nanostores/persistent": "^1.3.5",
     "@nanostores/react": "^2.0.1",
-    "astro": "^7.3.5",
+    "astro": "^7.4.2",
     "graphql-ws": "^5.16.2",
+    "leaflet": "^1.9.4",
     "nanostores": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.12",
+    "@types/leaflet": "^1.9.22",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.2",
@@ -30,5 +32,11 @@
   },
   "engines": {
     "node": ">=22.22.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true,
+    "sharp@0.34.5": true,
+    "sharp@0.35.5": true
   }
 }

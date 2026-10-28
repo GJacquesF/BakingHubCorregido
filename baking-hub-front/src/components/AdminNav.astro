@@ -1,6 +1,6 @@
 ---
 interface Props {
-  activa: 'resumen' | 'pedidos' | 'inventario' | 'usuarios';
+  activa: 'resumen' | 'pedidos' | 'inventario' | 'entregas' | 'usuarios';
 }
 
 const { activa } = Astro.props;
@@ -8,6 +8,7 @@ const enlaces = [
   { clave: 'resumen', href: '/admin', texto: 'Resumen' },
   { clave: 'pedidos', href: '/admin/pedidos', texto: 'Pedidos' },
   { clave: 'inventario', href: '/admin/inventario', texto: 'Inventario' },
+  { clave: 'entregas', href: '/admin/entregas', texto: 'Entregas' },
   { clave: 'usuarios', href: '/admin/usuarios', texto: 'Clientes' },
 ] as const;
 ---

@@ -103,6 +103,26 @@ try {
     ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pago_expira TIMESTAMPTZ;
     ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pagado_en TIMESTAMPTZ;
     CREATE INDEX IF NOT EXISTS pedidos_pago_id_idx ON pedidos (pago_id);
+
+    -- Mapa de entregas: puntos que crea el administrador y que el cliente elige en el checkout.
+    CREATE TABLE IF NOT EXISTS puntos_entrega (
+      id SERIAL PRIMARY KEY,
+      nombre VARCHAR(100) NOT NULL,
+      direccion VARCHAR(255) NOT NULL,
+      referencia VARCHAR(255),
+      lat DOUBLE PRECISION NOT NULL CHECK (lat BETWEEN -90 AND 90),
+      lng DOUBLE PRECISION NOT NULL CHECK (lng BETWEEN -180 AND 180),
+      activo BOOLEAN NOT NULL DEFAULT TRUE,
+      creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    ALTER TABLE puntos_entrega ENABLE ROW LEVEL SECURITY;
+    -- El pedido guarda el punto elegido y además una copia de sus datos (si el admin lo edita o borra, el historial no cambia).
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS punto_entrega_id INT REFERENCES puntos_entrega(id) ON DELETE SET NULL;
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entrega_nombre VARCHAR(100);
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entrega_direccion VARCHAR(255);
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entrega_referencia VARCHAR(255);
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entrega_lat DOUBLE PRECISION;
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entrega_lng DOUBLE PRECISION;
   `);
 } catch (err) {
   console.error('❌ No se pudo preparar el esquema de la base de datos:', err.message);
@@ -173,12 +193,32 @@ type ItemPedido {
   cantidad: Int!
 }
 
+type PuntoEntrega {
+  id: ID!
+  nombre: String!
+  direccion: String!
+  referencia: String
+  lat: Float!
+  lng: Float!
+  activo: Boolean!
+}
+
+# Copia de los datos del punto de entrega al momento de comprar.
+type EntregaPedido {
+  nombre: String!
+  direccion: String!
+  referencia: String
+  lat: Float!
+  lng: Float!
+}
+
 type Pedido {
   id: ID!
   total: Float!
   status: String!
   fecha: String!
   productos: [ItemPedido!]!
+  entrega: EntregaPedido
   metodoPago: String
   pagoReferencia: String
   pagoUrl: String
@@ -193,6 +233,7 @@ type PedidoAdmin {
   clienteNombre: String!
   clienteEmail: String!
   productos: [ItemPedido!]!
+  entrega: EntregaPedido
 }
 
 type ConfigPagos {
@@ -240,7 +281,9 @@ type Query {
   misPedidos: [Pedido!]!
   pedido(id: ID!): Pedido
   configPagos: ConfigPagos!
+  puntosEntrega: [PuntoEntrega!]!
 
+  adminPuntosEntrega: [PuntoEntrega!]!
   adminResumen: ResumenAdmin!
   adminPedidos: [PedidoAdmin!]!
   adminProductos: [Producto!]!
@@ -251,7 +294,7 @@ type Mutation {
   registrar(nombre: String!, email: String!, password: String!): AuthPayload!
   login(email: String!, password: String!): AuthPayload!
 
-  crearPedido(productos: [ID!]!, metodoPago: String!, tarjeta: TarjetaInput): Pedido
+  crearPedido(productos: [ID!]!, metodoPago: String!, tarjeta: TarjetaInput, puntoEntregaId: ID): Pedido
   simularPago(pedidoId: ID!): Pedido
   registrarPresencia: Boolean!
 
@@ -259,6 +302,11 @@ type Mutation {
   actualizarProducto(id: ID!, nombre: String!, precio: Float!, imagen: String!, stock: Int!): Producto
   ajustarStock(id: ID!, cantidad: Int!): Producto
   eliminarProducto(id: ID!): String
+
+  crearPuntoEntrega(nombre: String!, direccion: String!, referencia: String, lat: Float!, lng: Float!): PuntoEntrega!
+  actualizarPuntoEntrega(id: ID!, nombre: String!, direccion: String!, referencia: String, lat: Float!, lng: Float!): PuntoEntrega!
+  cambiarEstadoPuntoEntrega(id: ID!, activo: Boolean!): PuntoEntrega!
+  eliminarPuntoEntrega(id: ID!): String
 
   actualizarUsuario(id: ID!, nombre: String!, email: String!): UsuarioAdmin
   cambiarEstadoUsuario(id: ID!, activo: Boolean!): UsuarioAdmin
@@ -340,6 +388,20 @@ function validarProducto({ nombre, precio, imagen, stock }) {
   }
   if (!Number.isInteger(stock) || stock < 0 || stock > 100_000) throw errorDeUsuario('El stock debe ser un entero entre 0 y 100000');
   return { nombre, precio: Math.round(precio * 100) / 100, imagen, stock };
+}
+
+/** Valida y limpia los datos de un punto de entrega (los usa el panel de admin). */
+function validarPuntoEntrega({ nombre, direccion, referencia, lat, lng }) {
+  nombre = nombre.trim();
+  direccion = direccion.trim();
+  referencia = (referencia ?? '').trim();
+  if (nombre.length < 2 || nombre.length > 100) throw errorDeUsuario('El nombre debe tener entre 2 y 100 caracteres');
+  if (direccion.length < 3 || direccion.length > 255) throw errorDeUsuario('La dirección debe tener entre 3 y 255 caracteres');
+  if (referencia.length > 255) throw errorDeUsuario('La referencia puede tener máximo 255 caracteres');
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+    throw errorDeUsuario('Las coordenadas no son válidas: marca el punto en el mapa');
+  }
+  return { nombre, direccion, referencia: referencia || null, lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 };
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -527,6 +589,17 @@ const resolvers = {
       return res.rows[0] ?? null;
     },
     configPagos: () => ({ modo: MODO, metodos: METODOS_ACTIVOS, horasParaPagar: HORAS_PARA_PAGAR }),
+    // Puntos que el cliente puede elegir en el checkout (solo los activos).
+    puntosEntrega: async (_, __, ctx) => {
+      requiereLogin(ctx);
+      const res = await pool.query('SELECT * FROM puntos_entrega WHERE activo ORDER BY nombre, id');
+      return res.rows;
+    },
+    adminPuntosEntrega: async (_, __, ctx) => {
+      requiereAdmin(ctx);
+      const res = await pool.query('SELECT * FROM puntos_entrega ORDER BY activo DESC, nombre, id');
+      return res.rows;
+    },
 
     adminPedidos: async (_, __, ctx) => {
       requiereAdmin(ctx);
@@ -599,6 +672,16 @@ const resolvers = {
 
   Pedido: {
     fecha: (pedido) => new Date(pedido.fecha).toISOString(),
+    entrega: (pedido) =>
+      pedido.entrega_nombre
+        ? {
+            nombre: pedido.entrega_nombre,
+            direccion: pedido.entrega_direccion,
+            referencia: pedido.entrega_referencia ?? null,
+            lat: pedido.entrega_lat,
+            lng: pedido.entrega_lng,
+          }
+        : null,
     metodoPago: (pedido) => pedido.metodo_pago ?? null,
     pagoReferencia: (pedido) => pedido.pago_referencia ?? null,
     pagoUrl: (pedido) => pedido.pago_url ?? null,
@@ -616,6 +699,16 @@ const resolvers = {
 
   PedidoAdmin: {
     fecha: (pedido) => new Date(pedido.fecha).toISOString(),
+    entrega: (pedido) =>
+      pedido.entrega_nombre
+        ? {
+            nombre: pedido.entrega_nombre,
+            direccion: pedido.entrega_direccion,
+            referencia: pedido.entrega_referencia ?? null,
+            lat: pedido.entrega_lat,
+            lng: pedido.entrega_lng,
+          }
+        : null,
     clienteNombre: (pedido) => pedido.cliente_nombre,
     clienteEmail: (pedido) => pedido.cliente_email,
     productos: async (pedido) => {
@@ -666,7 +759,7 @@ const resolvers = {
       return { token: firmarToken(usuario), usuario };
     },
 
-    crearPedido: async (_, { productos, metodoPago, tarjeta }, ctx) => {
+    crearPedido: async (_, { productos, metodoPago, tarjeta, puntoEntregaId }, ctx) => {
       const usuario = requiereLogin(ctx);
       if (productos.length === 0 || productos.length > 500) throw errorDeUsuario('El carrito no es válido');
 
@@ -708,9 +801,24 @@ const resolvers = {
 
         // El total se calcula aquí con los precios de la base de datos, nunca con lo que mande el cliente.
         const centavos = encontrados.rows.reduce((suma, p) => suma + Math.round(parseFloat(p.precio) * 100) * cantidades.get(p.id), 0);
+
+        // Punto de entrega: si la tienda tiene puntos activos, el cliente debe elegir uno. Se copian sus datos al pedido.
+        let punto = null;
+        if (puntoEntregaId != null && puntoEntregaId !== '') {
+          const r = await client.query('SELECT * FROM puntos_entrega WHERE id = $1 AND activo', [idEntero(puntoEntregaId)]);
+          punto = r.rows[0] ?? null;
+          if (!punto) throw errorDeUsuario('El punto de entrega elegido ya no está disponible. Elige otro.');
+        } else {
+          const hay = await client.query('SELECT 1 FROM puntos_entrega WHERE activo LIMIT 1');
+          if (hay.rowCount > 0) throw errorDeUsuario('Elige dónde quieres recibir tu pedido.');
+        }
+
         const insertado = await client.query(
-          'INSERT INTO pedidos (total, status, usuario_id, metodo_pago) VALUES ($1, $2, $3, $4) RETURNING *',
-          [centavos / 100, 'pendiente', usuario.id, metodo]
+          `INSERT INTO pedidos (total, status, usuario_id, metodo_pago, punto_entrega_id,
+                                entrega_nombre, entrega_direccion, entrega_referencia, entrega_lat, entrega_lng)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+          [centavos / 100, 'pendiente', usuario.id, metodo, punto?.id ?? null,
+           punto?.nombre ?? null, punto?.direccion ?? null, punto?.referencia ?? null, punto?.lat ?? null, punto?.lng ?? null]
         );
         pedido = insertado.rows[0];
         for (const [productoId, cantidad] of cantidades) {
@@ -843,6 +951,44 @@ const resolvers = {
       }
       await pool.query('DELETE FROM productos WHERE id = $1', [n]);
       return `Producto ${n} eliminado`;
+    },
+
+    crearPuntoEntrega: async (_, args, ctx) => {
+      requiereAdmin(ctx);
+      const d = validarPuntoEntrega(args);
+      const res = await pool.query(
+        'INSERT INTO puntos_entrega (nombre, direccion, referencia, lat, lng) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [d.nombre, d.direccion, d.referencia, d.lat, d.lng]
+      );
+      return res.rows[0];
+    },
+
+    actualizarPuntoEntrega: async (_, { id, ...datos }, ctx) => {
+      requiereAdmin(ctx);
+      const n = idEntero(id);
+      const d = validarPuntoEntrega(datos);
+      const res = await pool.query(
+        'UPDATE puntos_entrega SET nombre = $2, direccion = $3, referencia = $4, lat = $5, lng = $6 WHERE id = $1 RETURNING *',
+        [n, d.nombre, d.direccion, d.referencia, d.lat, d.lng]
+      );
+      if (res.rowCount === 0) throw errorDeUsuario('Ese punto de entrega ya no existe');
+      return res.rows[0];
+    },
+
+    cambiarEstadoPuntoEntrega: async (_, { id, activo }, ctx) => {
+      requiereAdmin(ctx);
+      const res = await pool.query('UPDATE puntos_entrega SET activo = $2 WHERE id = $1 RETURNING *', [idEntero(id), activo]);
+      if (res.rowCount === 0) throw errorDeUsuario('Ese punto de entrega ya no existe');
+      return res.rows[0];
+    },
+
+    eliminarPuntoEntrega: async (_, { id }, ctx) => {
+      requiereAdmin(ctx);
+      const n = idEntero(id);
+      // Los pedidos conservan su copia de la dirección; solo se suelta la relación (ON DELETE SET NULL).
+      const res = await pool.query('DELETE FROM puntos_entrega WHERE id = $1', [n]);
+      if (res.rowCount === 0) throw errorDeUsuario('Ese punto de entrega ya no existe');
+      return `Punto de entrega ${n} eliminado`;
     },
 
     actualizarUsuario: async (_, { id, nombre, email }, ctx) => {

@@ -20,6 +20,18 @@ CREATE TABLE usuarios (
 );
 
 
+-- Puntos del mapa de entregas (los crea el administrador, el cliente elige uno en el checkout).
+CREATE TABLE puntos_entrega (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(255) NOT NULL,
+    referencia VARCHAR(255),
+    lat DOUBLE PRECISION NOT NULL CHECK (lat BETWEEN -90 AND 90),
+    lng DOUBLE PRECISION NOT NULL CHECK (lng BETWEEN -180 AND 180),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE pedidos (
     id SERIAL PRIMARY KEY,
     total NUMERIC(10, 2) NOT NULL,
@@ -32,9 +44,17 @@ CREATE TABLE pedidos (
     pago_referencia VARCHAR(100),
     pago_url TEXT,
     pago_expira TIMESTAMPTZ,
-    pagado_en TIMESTAMPTZ
+    pagado_en TIMESTAMPTZ,
+    -- Entrega: punto elegido y copia de sus datos al momento de comprar
+    punto_entrega_id INT,
+    entrega_nombre VARCHAR(100),
+    entrega_direccion VARCHAR(255),
+    entrega_referencia VARCHAR(255),
+    entrega_lat DOUBLE PRECISION,
+    entrega_lng DOUBLE PRECISION
 );
 -- status: pendiente | pagado | cancelado | expirado | reembolsado
+ALTER TABLE pedidos ADD CONSTRAINT pedidos_punto_entrega_fk FOREIGN KEY (punto_entrega_id) REFERENCES puntos_entrega(id) ON DELETE SET NULL;
 CREATE INDEX pedidos_pago_id_idx ON pedidos (pago_id);
 
 
@@ -52,6 +72,10 @@ insert into productos (nombre, precio, imagen, stock) values
 ('Rol de Canela', 30.00, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-lRUUPAc3EBz-tqJktLtpjCqEBmIpIgw6aLf-eHPqUDmVMQZXbLEvr6EK&s=10', 25);
 
 
+-- Punto de entrega de ejemplo (centro de CDMX). Bórralo o edítalo desde Admin > Entregas.
+insert into puntos_entrega (nombre, direccion, referencia, lat, lng) values
+('Sucursal Zócalo', 'Plaza de la Constitución s/n, Centro, CDMX', 'Frente a la Catedral', 19.432608, -99.133209);
+
 -- ---------------------------------------------------------------------------------------
 -- SUPABASE: activa Row Level Security en todas las tablas.
 -- Supabase publica las tablas del esquema "public" mediante su API REST con la clave "anon"
@@ -63,3 +87,4 @@ ALTER TABLE productos         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usuarios          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedidos           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedido_productos  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puntos_entrega    ENABLE ROW LEVEL SECURITY;

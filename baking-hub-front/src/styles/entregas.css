@@ -1,0 +1,76 @@
+/* Mapa de entregas: selector del checkout y panel de administración. */
+
+.entrega { border: none; padding: 0; margin: 0 0 1.5rem; min-width: 0; }
+.entrega-titulo { font-family: var(--font-display); font-size: 1.15rem; margin: 0 0 0.75rem; padding: 0; }
+
+.entrega-mapa {
+  width: 100%;
+  height: 300px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 0; /* que los controles de Leaflet no se pongan por encima de la cabecera */
+  isolation: isolate;
+}
+.entrega-mapa-admin { height: 420px; margin-bottom: 0.5rem; }
+
+.entrega-barra { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.7rem 0; }
+.entrega-ubicacion {
+  font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  padding: 0.45rem 0.8rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+}
+.entrega-ubicacion:hover:not(:disabled) { border-color: var(--primary); }
+.entrega-ubicacion:disabled { opacity: 0.6; cursor: wait; }
+.entrega-error { color: var(--jam); font-size: 0.85rem; }
+
+.entrega-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; max-height: 260px; overflow-y: auto; }
+.entrega-opcion {
+  display: flex; align-items: center; gap: 0.75rem; cursor: pointer;
+  padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+}
+.entrega-opcion:hover { border-color: var(--primary); }
+.entrega-opcion.seleccionado { border-color: var(--primary-strong); background: var(--selected-option-surface, var(--surface-2)); box-shadow: 0 0 0 1px var(--primary-strong); }
+.entrega-opcion input { accent-color: var(--primary-strong); flex: none; }
+.entrega-opcion-texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.entrega-opcion-texto small { color: var(--muted); overflow-wrap: anywhere; }
+.entrega-opcion-texto .entrega-ref { font-style: italic; }
+.entrega-km { font-size: 0.82rem; font-weight: 600; color: var(--primary-strong); white-space: nowrap; }
+.entrega-osm { font-size: 0.82rem; color: var(--muted); text-decoration: underline; flex: none; }
+
+.checkout-entrega-resumen { margin: 0.8rem 0 0; font-size: 0.9rem; color: var(--muted); }
+.checkout-entrega-resumen strong { color: var(--text); }
+
+/* Pines (divIcon, sin imágenes) */
+.pin-mapa-wrap { background: none; border: none; }
+.pin-mapa {
+  display: block; width: 26px; height: 26px; margin: 2px 2px 0;
+  background: var(--primary-strong, #c7785a); border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); transition: transform 0.15s;
+}
+.pin-mapa::after { content: ''; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #fff; top: 7px; left: 7px; }
+.pin-mapa.pin-activo { background: #2f7d4f; transform: rotate(-45deg) scale(1.2); }
+.pin-mapa.pin-borrador { background: #2b6cb0; }
+.pin-mapa.pin-inactivo { background: #8a8a8a; }
+.pin-yo { display: block; width: 16px; height: 16px; border-radius: 50%; background: #2b6cb0; border: 3px solid #fff; box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.3); }
+
+/* Panel admin */
+.entregas-busqueda { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+.entregas-busqueda input {
+  flex: 1; min-width: 220px; font: inherit; padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--cream); color: var(--espresso);
+}
+.entregas-resultados { list-style: none; margin: 0 0 0.8rem; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.entregas-resultados li + li { border-top: 1px solid var(--line); }
+.entregas-resultados button { width: 100%; text-align: left; font: inherit; font-size: 0.9rem; padding: 0.6rem 0.8rem; border: 0; background: transparent; color: var(--text); cursor: pointer; }
+.entregas-resultados button:hover { background: var(--surface-2); }
+.entregas-ayuda { color: var(--espresso-soft); font-size: 0.88rem; margin: 0 0 1.25rem; }
+.entregas-acciones { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.entregas-subtitulo { font-size: 1.15rem; margin: 1.75rem 0 0.8rem; }
+.admin-entregas .campo-admin input[readonly] { opacity: 0.8; }
+
+@media (max-width: 600px) {
+  .entrega-mapa { height: 260px; }
+  .entrega-mapa-admin { height: 340px; }
+}

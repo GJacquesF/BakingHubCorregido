@@ -31,6 +31,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ error: 'Elige un método de pago válido.' }, 400);
   }
 
+  // Punto de entrega elegido en el mapa (el backend comprueba que exista y esté activo).
+  const puntoRaw: unknown = cuerpo?.puntoEntregaId;
+  if (puntoRaw != null && (typeof puntoRaw !== 'string' || !/^\d{1,9}$/.test(puntoRaw))) {
+    return json({ error: 'El punto de entrega no es válido.' }, 400);
+  }
+  const puntoEntregaId = (puntoRaw as string | null | undefined) ?? null;
+
   let tarjeta: Record<string, unknown> | undefined;
   if (metodoPago === 'tarjeta') {
     const t = cuerpo?.tarjeta;
@@ -52,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { crearPedido } = await graphql<{ crearPedido: unknown }>(
       CREAR_PEDIDO,
-      { productos, metodoPago, tarjeta },
+      { productos, metodoPago, tarjeta, puntoEntregaId },
       locals.token,
       30_000,
     );

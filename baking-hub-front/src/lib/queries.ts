@@ -13,12 +13,13 @@ export const OBTENER_PRODUCTO = `
 const CAMPOS_PEDIDO = `
   id total status fecha
   metodoPago pagoReferencia pagoUrl pagoExpira
+  entrega { nombre direccion referencia lat lng }
   productos { id nombre precio cantidad }
 `;
 
 export const CREAR_PEDIDO = `
-  mutation CrearPedido($productos: [ID!]!, $metodoPago: String!, $tarjeta: TarjetaInput) {
-    crearPedido(productos: $productos, metodoPago: $metodoPago, tarjeta: $tarjeta) {
+  mutation CrearPedido($productos: [ID!]!, $metodoPago: String!, $tarjeta: TarjetaInput, $puntoEntregaId: ID) {
+    crearPedido(productos: $productos, metodoPago: $metodoPago, tarjeta: $tarjeta, puntoEntregaId: $puntoEntregaId) {
       id total status metodoPago pagoUrl
     }
   }
@@ -82,6 +83,7 @@ export const ADMIN_PEDIDOS = `
   query AdminPedidos {
     adminPedidos {
       id total status fecha clienteNombre clienteEmail
+      entrega { nombre direccion referencia lat lng }
       productos { id nombre precio cantidad }
     }
   }
@@ -158,5 +160,46 @@ export const CAMBIAR_ESTADO_USUARIO = `
 export const ELIMINAR_USUARIO = `
   mutation EliminarUsuario($id: ID!) {
     eliminarUsuario(id: $id)
+  }
+`;
+
+/* ---------------------------------- Mapa de entregas ---------------------------------- */
+
+const CAMPOS_PUNTO = 'id nombre direccion referencia lat lng activo';
+
+/** Puntos activos que el cliente puede elegir en el checkout. */
+export const PUNTOS_ENTREGA = `
+  query PuntosEntrega {
+    puntosEntrega { ${CAMPOS_PUNTO} }
+  }
+`;
+
+export const ADMIN_PUNTOS_ENTREGA = `
+  query AdminPuntosEntrega {
+    adminPuntosEntrega { ${CAMPOS_PUNTO} }
+  }
+`;
+
+export const CREAR_PUNTO_ENTREGA = `
+  mutation CrearPuntoEntrega($nombre: String!, $direccion: String!, $referencia: String, $lat: Float!, $lng: Float!) {
+    crearPuntoEntrega(nombre: $nombre, direccion: $direccion, referencia: $referencia, lat: $lat, lng: $lng) { id }
+  }
+`;
+
+export const ACTUALIZAR_PUNTO_ENTREGA = `
+  mutation ActualizarPuntoEntrega($id: ID!, $nombre: String!, $direccion: String!, $referencia: String, $lat: Float!, $lng: Float!) {
+    actualizarPuntoEntrega(id: $id, nombre: $nombre, direccion: $direccion, referencia: $referencia, lat: $lat, lng: $lng) { id }
+  }
+`;
+
+export const CAMBIAR_ESTADO_PUNTO_ENTREGA = `
+  mutation CambiarEstadoPuntoEntrega($id: ID!, $activo: Boolean!) {
+    cambiarEstadoPuntoEntrega(id: $id, activo: $activo) { id activo }
+  }
+`;
+
+export const ELIMINAR_PUNTO_ENTREGA = `
+  mutation EliminarPuntoEntrega($id: ID!) {
+    eliminarPuntoEntrega(id: $id)
   }
 `;

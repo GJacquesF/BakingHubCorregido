@@ -97,6 +97,21 @@ try {
                       <li>{producto.cantidad} × {producto.nombre}</li>
                     ))}
                   </ul>
+                  {pedido.entrega && (
+                    <p class="pedido-entrega">
+                      📍 <strong>{pedido.entrega.nombre}</strong>
+                      <br />
+                      <small>{pedido.entrega.direccion}</small>
+                      <br />
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${pedido.entrega.lat}&mlon=${pedido.entrega.lng}#map=17/${pedido.entrega.lat}/${pedido.entrega.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Ver en el mapa
+                      </a>
+                    </p>
+                  )}
                 </td>
                 <td data-label="Total" class="num">{precio(pedido.total)}</td>
                 <td data-label="Pago"><span class={`badge badge-${pago.clase}`}>{pago.etiqueta}</span></td>
@@ -131,6 +146,8 @@ try {
   .tabla-pedidos { min-width: 820px; }
   .tabla-pedidos tr[hidden] { display: none; }
   .pedido-productos-admin { margin: 0; padding-left: 1.1rem; min-width: 150px; }
+  .pedido-entrega { margin: 0.6rem 0 0; font-size: 0.88rem; }
+  .pedido-entrega a { color: var(--honey-dark); font-weight: 600; }
   .pedido-productos-admin li + li { margin-top: 0.2rem; }
   .pedido-cliente { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.55rem; width: 100%; min-width: 150px; }
   .pedido-cliente [data-customer-details] { order: 0; min-width: 0; }
