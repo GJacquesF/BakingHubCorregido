@@ -5,20 +5,23 @@ import { precio } from '../lib/format';
 import { METODOS } from '../lib/pagos';
 import { tokenizarTarjeta, type DatosTarjeta } from '../lib/mercadopago-cliente';
 import type { ErroresTarjeta } from '../lib/tarjeta';
-import type { ConfigPagos, MetodoPago, TarjetaTokenizada } from '../types';
+import type { ConfigPagos, MetodoPago, PuntoEntrega, TarjetaTokenizada } from '../types';
 import MetodosPago from './MetodosPago';
 import FormularioTarjeta from './FormularioTarjeta';
+import SelectorEntrega from './SelectorEntrega';
 import '../styles/carrito.css';
 import '../styles/pago.css';
 
 interface Props {
   config: ConfigPagos;
+  /** Puntos de entrega activos (si no hay ninguno, el checkout no pide dirección). */
+  puntos: PuntoEntrega[];
   usuario: { nombre: string; email: string };
 }
 
 const TARJETA_VACIA: DatosTarjeta = { numero: '', titular: '', vencimiento: '', cvv: '' };
 
-export default function CheckoutView({ config, usuario }: Props) {
+export default function CheckoutView({ config, puntos, usuario }: Props) {
   const items = useStore(carrito);
   const articulos = useStore(totalArticulos);
   const total = useStore(totalPrecio);
@@ -26,6 +29,7 @@ export default function CheckoutView({ config, usuario }: Props) {
   const [metodo, setMetodo] = useState<MetodoPago>(config.metodos[0] ?? 'tarjeta');
   const [tarjeta, setTarjeta] = useState<DatosTarjeta>(TARJETA_VACIA);
   const [erroresTarjeta, setErroresTarjeta] = useState<ErroresTarjeta>({});
+  const [puntoId, setPuntoId] = useState<string | null>(puntos.length === 1 ? puntos[0].id : null);
   const [pagando, setPagando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +43,11 @@ export default function CheckoutView({ config, usuario }: Props) {
 
   const manejarPago = async () => {
     setError(null);
+    if (puntos.length > 0 && !puntoId) {
+      setError('Elige en el mapa dónde quieres recibir tu pedido.');
+      document.getElementById('seccion-entrega')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     let datosTarjeta: TarjetaTokenizada | undefined;
 
     if (metodo === 'tarjeta' && config.modo === 'real') {
@@ -59,7 +68,7 @@ export default function CheckoutView({ config, usuario }: Props) {
       const res = await fetch('/api/pedido', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productos, metodoPago: metodo, tarjeta: datosTarjeta }),
+        body: JSON.stringify({ productos, metodoPago: metodo, tarjeta: datosTarjeta, puntoEntregaId: puntoId }),
       });
 
       if (res.status === 401) {
@@ -85,6 +94,8 @@ export default function CheckoutView({ config, usuario }: Props) {
     }
   };
 
+  const puntoSeleccionado = puntos.find((p) => p.id === puntoId) ?? null;
+
   const textoBoton = pagando
     ? 'Procesando…'
     : metodo === 'oxxo'
@@ -102,6 +113,12 @@ export default function CheckoutView({ config, usuario }: Props) {
           <p className="aviso-simulado" role="note">
             <strong>Modo de pruebas.</strong> No se hará ningún cobro real.
           </p>
+        )}
+
+        {puntos.length > 0 && (
+          <div id="seccion-entrega">
+            <SelectorEntrega puntos={puntos} seleccionadoId={puntoId} deshabilitado={pagando} onChange={setPuntoId} />
+          </div>
         )}
 
         <MetodosPago metodos={config.metodos} seleccionado={metodo} deshabilitado={pagando} onChange={setMetodo} />
@@ -193,6 +210,13 @@ export default function CheckoutView({ config, usuario }: Props) {
           <span>Total a pagar</span>
           <strong>{precio(total)}</strong>
         </p>
+        {puntoSeleccionado && (
+          <p className="checkout-entrega-resumen">
+            📍 Entrega en <strong>{puntoSeleccionado.nombre}</strong>
+            <br />
+            {puntoSeleccionado.direccion}
+          </p>
+        )}
         <p className="resumen-metodo">
           {METODOS[metodo].icono} {METODOS[metodo].etiqueta}
         </p>

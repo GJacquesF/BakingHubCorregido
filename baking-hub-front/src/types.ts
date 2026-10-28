@@ -29,6 +29,25 @@ export interface ItemPedido {
 
 export type MetodoPago = 'tarjeta' | 'oxxo' | 'spei' | 'mercadopago';
 
+export interface PuntoEntrega {
+  id: string;
+  nombre: string;
+  direccion: string;
+  referencia: string | null;
+  lat: number;
+  lng: number;
+  activo: boolean;
+}
+
+/** Copia del punto de entrega guardada en el pedido. */
+export interface EntregaPedido {
+  nombre: string;
+  direccion: string;
+  referencia: string | null;
+  lat: number;
+  lng: number;
+}
+
 export interface Pedido {
   id: string;
   total: number;
@@ -43,6 +62,7 @@ export interface Pedido {
   pagoUrl: string | null;
   /** Fecha límite para pagar (ISO). */
   pagoExpira: string | null;
+  entrega: EntregaPedido | null;
 }
 
 export interface PedidoAdmin {
@@ -52,6 +72,7 @@ export interface PedidoAdmin {
   fecha: string;
   clienteNombre: string;
   clienteEmail: string;
+  entrega: EntregaPedido | null;
   productos: ItemPedido[];
 }
 

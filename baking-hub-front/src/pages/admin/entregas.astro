@@ -1,0 +1,29 @@
+---
+// Mapa de entregas: el administrador marca los puntos donde se entregan los pedidos. Ruta protegida (solo admin).
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Alert from '../../components/Alert.astro';
+import AdminEntregas from '../../components/AdminEntregas';
+import { graphql } from '../../lib/graphql';
+import { ADMIN_PUNTOS_ENTREGA } from '../../lib/queries';
+import { mensajeError } from '../../lib/admin';
+import type { PuntoEntrega } from '../../types';
+
+const token = Astro.locals.token;
+let puntos: PuntoEntrega[] = [];
+let error: string | null = null;
+
+try {
+  ({ adminPuntosEntrega: puntos } = await graphql<{ adminPuntosEntrega: PuntoEntrega[] }>(ADMIN_PUNTOS_ENTREGA, {}, token));
+} catch (e) {
+  error = mensajeError(e);
+}
+---
+
+<AdminLayout titulo="Entregas" seccion="entregas">
+  <h2 class="admin-titulo">Mapa de entregas</h2>
+  <p class="admin-subtitulo">
+    Marca en el mapa los puntos donde entregas los pedidos. Los clientes elegirán uno al finalizar su compra.
+  </p>
+  {error && <Alert>{error}</Alert>}
+  {!error && <AdminEntregas client:only="react" puntosIniciales={puntos}><p slot="fallback" class="estado-vacio">Cargando mapa…</p></AdminEntregas>}
+</AdminLayout>

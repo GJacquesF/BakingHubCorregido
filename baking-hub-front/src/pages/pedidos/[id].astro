@@ -8,6 +8,7 @@ import { graphql, ApiError } from '../../lib/graphql';
 import { CONFIG_PAGOS, OBTENER_PEDIDO, SIMULAR_PAGO } from '../../lib/queries';
 import { METODOS, estadoPedido, formatearFecha } from '../../lib/pagos';
 import { precio } from '../../lib/format';
+import { urlMapa } from '../../lib/mapa';
 import type { ConfigPagos, Pedido } from '../../types';
 
 const { id } = Astro.params;
@@ -91,6 +92,17 @@ const pendiente = pedido?.status === 'pendiente';
           </p>
         )}
 
+        {pedido.entrega && (
+          <p class="entrega-pedido">
+            📍 <strong>Entrega en {pedido.entrega.nombre}</strong>
+            <br />
+            {pedido.entrega.direccion}
+            {pedido.entrega.referencia && <><br /><em>{pedido.entrega.referencia}</em></>}
+            <br />
+            <a href={urlMapa(pedido.entrega.lat, pedido.entrega.lng)} target="_blank" rel="noopener noreferrer">Ver en el mapa</a>
+          </p>
+        )}
+
         <ul class="lineas">
           {pedido.productos.map((p) => (
             <li>
@@ -126,6 +138,9 @@ const pendiente = pedido?.status === 'pendiente';
     text-decoration: none;
     margin-bottom: 1rem;
   }
+
+  .entrega-pedido { margin: 1rem 0; padding: 0.8rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--cream); font-size: 0.92rem; }
+  .entrega-pedido a { color: var(--honey-dark); font-weight: 600; }
 
   .volver:hover { color: var(--espresso); }
 
