@@ -1,13 +1,16 @@
-const SHELL_CACHE = "bakinghub-shell-v1";
-const DYNAMIC_CACHE = "bakinghub-dynamic-v1";
+const SHELL_CACHE = "bakinghub-shell-v2";
+const DYNAMIC_CACHE = "bakinghub-dynamic-v2";
 const OFFLINE_URL = "/offline.html";
-const APP_SHELL = ["/", OFFLINE_URL, "/favicon.svg", "/manifest.webmanifest"];
+const APP_SHELL = [OFFLINE_URL, "/favicon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", event => {
     event.waitUntil(
         caches
             .open(SHELL_CACHE)
-            .then(cache => cache.addAll(APP_SHELL))
+            .then(async cache => {
+                await cache.addAll(APP_SHELL);
+                await cache.add(new Request(OFFLINE_URL, { cache: "reload" }));
+            })
             .then(() => self.skipWaiting()),
     );
 });
@@ -40,7 +43,16 @@ self.addEventListener("fetch", event => {
                     caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
                     return response;
                 })
-                .catch(() => caches.match(OFFLINE_URL) || caches.match("/")),
+                .catch(async () => {
+                    const offlinePage = await caches.match(OFFLINE_URL);
+                    return (
+                        offlinePage ||
+                        new Response("<html><body><h1>Sin conexión</h1></body></html>", {
+                            headers: { "Content-Type": "text/html; charset=utf-8" },
+                            status: 503,
+                        })
+                    );
+                }),
         );
         return;
     }
