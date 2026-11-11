@@ -7,6 +7,12 @@ interface ImportMetaEnv {
     readonly PUBLIC_GOOGLE_CLIENT_ID?: string;
     /** Clave pública del widget de Cloudflare Turnstile. */
     readonly PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY?: string;
+    /** URL pública del proyecto Supabase. */
+    readonly PUBLIC_SUPABASE_URL?: string;
+    /** Anon key pública de Supabase para Storage. */
+    readonly PUBLIC_SUPABASE_ANON_KEY?: string;
+    /** Bucket público de Supabase para imágenes. */
+    readonly PUBLIC_SUPABASE_BUCKET?: string;
     /** Mapa de entregas (todas opcionales; ver .env.example). */
     readonly PUBLIC_MAPA_LAT?: string;
     readonly PUBLIC_MAPA_LNG?: string;
