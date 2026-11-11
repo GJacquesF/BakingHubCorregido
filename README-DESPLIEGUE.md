@@ -32,7 +32,9 @@ Haz los pasos **en este orden**, porque cada URL se necesita en el paso siguient
    - `MP_TEST_PAYER_EMAIL`: **opcional**. Déjalo vacío al principio (se cobra con el correo del cliente). Define una cuenta compradora de *Cuentas de prueba* solo si Mercado Pago rechaza al comprador.
    - `ADMIN_EMAIL`: el correo con el que te registrarás como admin.
    - `GOOGLE_CLIENT_ID`: Client ID de OAuth para una aplicación web de Google Cloud.
-   - `SMTP_USER` y `SMTP_PASS`: Gmail y su contraseña de aplicación para enviar códigos de verificación.
+   - `SMTP_USER` y `SMTP_PASS`: cuenta Gmail y su contraseña de aplicación para enviar códigos de verificación.
+     No uses la contraseña normal de Gmail. Si la contraseña de aplicación aparece separada en grupos,
+     puedes pegarla con o sin espacios.
    - `FRONTEND_URL`, `BACKEND_PUBLIC_URL` y `MP_WEBHOOK_SECRET`: déjalas vacías por ahora y vuelve al paso 4
      (`pagos.js` exige `MP_WEBHOOK_SECRET` solo si `BACKEND_PUBLIC_URL` tiene valor).
 3. Cuando termine el deploy, abre `https://TU-SERVICIO.onrender.com/health`. Debe responder `{"ok":true}`.

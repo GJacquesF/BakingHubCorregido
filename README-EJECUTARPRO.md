@@ -68,7 +68,9 @@ SMTP_PASS=tu-contrasena-de-aplicacion
 
 En Google Cloud crea un cliente OAuth de tipo aplicación web y agrega como orígenes autorizados
 `http://localhost:4321` y el dominio público del frontend. En Gmail utiliza una contraseña de aplicación,
-no la contraseña normal de la cuenta. `GOOGLE_CLIENT_ID`, `SMTP_USER` y `SMTP_PASS` van únicamente en el
+no la contraseña normal de la cuenta. Puedes pegarla con o sin los espacios que Gmail muestra. Si no se
+envían los códigos, revisa los registros del backend y confirma que `SMTP_USER` y `SMTP_PASS` estén definidos
+correctamente. `GOOGLE_CLIENT_ID`, `SMTP_USER` y `SMTP_PASS` van únicamente en el
 entorno del backend (Render y `.env` local); `PUBLIC_GOOGLE_CLIENT_ID` va en el frontend y Netlify.
 
 El backend agrega automáticamente las columnas nuevas de autenticación en el arranque. En Supabase debes

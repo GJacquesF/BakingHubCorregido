@@ -64,6 +64,9 @@ if (Astro.request.method === 'POST') {
         if (e instanceof ApiError && e.codigo === 'EMAIL_DELIVERY_FAILED') {
           pasoVerificacion = true;
           error = e.message;
+        } else if (e instanceof ApiError && e.codigo === 'EMAIL_NOT_VERIFIED') {
+          pasoVerificacion = true;
+          mensaje = e.message;
         } else {
           error =
             e instanceof ApiError && e.codigo === 'BAD_USER_INPUT'
@@ -79,7 +82,7 @@ if (Astro.request.method === 'POST') {
 <Layout titulo="Crear cuenta">
   <AuthCard
     titulo={pasoVerificacion ? 'Verifica tu correo' : 'Crear cuenta'}
-    subtitulo={pasoVerificacion ? `Ingresa el código enviado a ${email}.` : 'Con tu cuenta puedes pagar y ver tus pedidos anteriores.'}
+    subtitulo={pasoVerificacion ? `Confirma el correo ${email}. Si no recibiste el código, solicita uno nuevo.` : 'Con tu cuenta puedes pagar y ver tus pedidos anteriores.'}
   >
     {error && <Alert>{error}</Alert>}
     {mensaje && <p role="status">{mensaje}</p>}

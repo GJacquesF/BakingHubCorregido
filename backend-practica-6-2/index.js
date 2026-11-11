@@ -38,7 +38,8 @@ const googleClient = process.env.GOOGLE_CLIENT_ID
   : null;
 
 async function enviarCodigoVerificacion({ nombre, email, codigo }) {
-  const { SMTP_USER, SMTP_PASS } = process.env;
+  const SMTP_USER = process.env.SMTP_USER?.trim();
+  const SMTP_PASS = process.env.SMTP_PASS?.replace(/\s/g, '');
   if (!SMTP_USER || !SMTP_PASS) {
     throw new Error('El envío de correo no está configurado (SMTP_USER/SMTP_PASS).');
   }
@@ -796,7 +797,19 @@ const resolvers = {
           [nombre, email, hash, esAdmin ? 'admin' : 'cliente', codigo]
         );
       } catch (error) {
-        if (error.code === '23505') throw errorDeUsuario('Ese correo ya está registrado');
+        if (error.code === '23505') {
+          const existente = await pool.query(
+            'SELECT email_verificado FROM usuarios WHERE email = $1',
+            [email]
+          );
+          if (existente.rows[0] && !existente.rows[0].email_verificado) {
+            throw new GraphQLError(
+              'Esta cuenta ya está registrada y necesita verificar el correo. Solicita un nuevo código.',
+              { extensions: { code: 'EMAIL_NOT_VERIFIED' } }
+            );
+          }
+          throw errorDeUsuario('Ese correo ya está registrado');
+        }
         console.error('Error al registrar usuario:', error);
         throw new Error('Error al registrar usuario');
       }
@@ -831,7 +844,10 @@ const resolvers = {
       if (!fila.activo) throw errorNoAutenticado('Tu cuenta está suspendida. Contacta a la tienda para reactivarla.');
       fallosLogin.delete(email);
       if (!fila.email_verificado) {
-        throw new GraphQLError('EMAIL_NOT_VERIFIED', { extensions: { code: 'EMAIL_NOT_VERIFIED' } });
+        throw new GraphQLError(
+          'Tu correo aún no está verificado. Confírmalo para poder iniciar sesión.',
+          { extensions: { code: 'EMAIL_NOT_VERIFIED' } }
+        );
       }
       const { password_hash, ...usuario } = fila;
       return { token: firmarToken(usuario), usuario };
