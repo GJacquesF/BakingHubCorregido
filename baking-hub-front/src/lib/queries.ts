@@ -57,8 +57,8 @@ export const ME = `
 `;
 
 export const LOGIN = `
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) { token }
+  mutation Login($email: String!, $password: String!, $turnstileToken: String) {
+    login(email: $email, password: $password, turnstileToken: $turnstileToken) { token }
   }
 `;
 
@@ -69,8 +69,8 @@ export const LOGIN_CON_GOOGLE = `
 `;
 
 export const REGISTRAR = `
-  mutation Registrar($nombre: String!, $email: String!, $password: String!) {
-    registrar(nombre: $nombre, email: $email, password: $password) { mensaje }
+  mutation Registrar($nombre: String!, $email: String!, $password: String!, $turnstileToken: String) {
+    registrar(nombre: $nombre, email: $email, password: $password, turnstileToken: $turnstileToken) { mensaje }
   }
 `;
 
@@ -171,7 +171,7 @@ export const ELIMINAR_USUARIO = `
 
 /* ---------------------------------- Mapa de entregas ---------------------------------- */
 
-const CAMPOS_PUNTO = 'id nombre direccion referencia lat lng activo';
+const CAMPOS_PUNTO = "id nombre direccion referencia lat lng activo";
 
 /** Puntos activos que el cliente puede elegir en el checkout. */
 export const PUNTOS_ENTREGA = `

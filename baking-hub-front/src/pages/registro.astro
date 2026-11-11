@@ -23,12 +23,21 @@ if (Astro.request.method === 'POST') {
   nombre = String(datos.get('nombre') ?? '').trim();
   const password = String(datos.get('password') ?? '');
   const confirmar = String(datos.get('confirmar') ?? '');
+  const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
+  const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
 
-  if (password !== confirmar) {
+  if (turnstileEnabled && !turnstileToken) {
+    error = 'Completa la verificación de seguridad antes de crear la cuenta.';
+  } else if (password !== confirmar) {
     error = 'Las contraseñas no coinciden.';
   } else {
     try {
-      await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, { nombre, email, password });
+      await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, {
+        nombre,
+        email,
+        password,
+        turnstileToken: turnstileEnabled ? turnstileToken : null,
+      });
       registroExitoso = true;
       mensaje = 'Cuenta creada. Ya puedes iniciar sesión.';
     } catch (e) {
@@ -40,6 +49,8 @@ if (Astro.request.method === 'POST') {
   }
 }
 ---
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <Layout titulo="Crear cuenta">
   <AuthCard
@@ -57,6 +68,16 @@ if (Astro.request.method === 'POST') {
           <FormField label="Correo" name="email" type="email" autocomplete="email" value={email} />
           <FormField label="Contraseña (mínimo 8 caracteres)" name="password" type="password" autocomplete="new-password" minlength={8} />
           <FormField label="Repite la contraseña" name="confirmar" type="password" autocomplete="new-password" minlength={8} />
+          {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+            <div class="turnstile-wrap">
+              <div
+                class="cf-turnstile"
+                data-sitekey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
+                data-theme="light"
+                data-size="normal"
+              />
+            </div>
+          )}
           <button class="btn-primario" type="submit">Crear cuenta</button>
         </form>
         <p class="separador-auth">O continúa con</p>
@@ -74,5 +95,11 @@ if (Astro.request.method === 'POST') {
     margin: 1.25rem 0 0;
     text-align: center;
     color: var(--espresso-soft);
+  }
+
+  .turnstile-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 0.5rem;
   }
 </style>
