@@ -28,14 +28,18 @@ const productJsonLd = JSON.stringify({
 
 <script type="application/ld+json" set:html={productJsonLd} />
 <div class="detalle-card">
-  <a class="volver-btn" href="/">← Volver al catálogo</a>
+  <a class="volver-btn" href="/" data-i18n="product.backCatalog">← Volver al catálogo</a>
   <h1>{producto.nombre}</h1>
   <img src={producto.imagen} alt={producto.nombre} width="720" height="480" loading="eager" fetchpriority="high" />
-  <p class="detalle-precio">Precio: {precio(producto.precio)}</p>
-  {producto.stock <= 0 && <p class="existencia agotado">Producto agotado por ahora</p>}
-  {producto.stock > 0 && producto.stock <= 5 && <p class="existencia pocas">¡Solo quedan {producto.stock} piezas!</p>}
+  <p class="detalle-precio" data-i18n="product.price">Precio: {precio(producto.precio)}</p>
+  {producto.stock <= 0 && <p class="existencia agotado" data-i18n="product.outOfStock">Producto agotado por ahora</p>}
+  {producto.stock > 0 && producto.stock <= 5 && (
+    <p class="existencia pocas" data-i18n="product.fewLeft" data-i18n-params={JSON.stringify({ count: producto.stock })}>
+      ¡Solo quedan {producto.stock} piezas!
+    </p>
+  )}
   <AddToCartButton client:only="react" producto={producto}>
-    <button slot="fallback" class="btn-primario" disabled>Añadir al carrito</button>
+    <button slot="fallback" class="btn-primario" disabled data-i18n="product.addToCart">Añadir al carrito</button>
   </AddToCartButton>
 </div>
 

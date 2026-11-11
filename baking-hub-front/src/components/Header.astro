@@ -2,7 +2,33 @@
 import CartButton from './CartButton.astro';
 
 const { usuario } = Astro.locals;
+const locale = Astro.currentLocale ?? 'es';
 const primerNombre = usuario?.nombre.split(' ')[0];
+const strings = {
+  es: {
+    admin: 'Panel admin',
+    pedidos: 'Mis pedidos',
+    hola: 'Hola',
+    salir: 'Salir',
+    ingresar: 'Ingresar',
+    registro: 'Crear cuenta',
+    idioma: 'Idioma',
+    theme: 'Modo oscuro',
+    dark: 'Oscuro',
+  },
+  en: {
+    admin: 'Admin panel',
+    pedidos: 'My orders',
+    hola: 'Hi',
+    salir: 'Log out',
+    ingresar: 'Sign in',
+    registro: 'Create account',
+    idioma: 'Language',
+    theme: 'Dark mode',
+    dark: 'Dark',
+  },
+};
+const t = strings[locale] ?? strings.es;
 ---
 
 <header class="top-bar">
@@ -12,22 +38,29 @@ const primerNombre = usuario?.nombre.split(' ')[0];
     {
       usuario ? (
         <>
-          {usuario.rol === 'admin' && <a class="enlace enlace-admin" href="/admin">Panel admin</a>}
-          <a class="enlace" href="/pedidos">Mis pedidos</a>
-          <span class="saludo">Hola, {primerNombre}</span>
+          {usuario.rol === 'admin' && <a class="enlace enlace-admin" href="/admin" data-i18n="header.admin">{t.admin}</a>}
+          <a class="enlace" href="/pedidos" data-i18n="header.pedidos">{t.pedidos}</a>
+          <span class="saludo" data-i18n="header.hola" data-i18n-name={primerNombre}>{t.hola}, {primerNombre}</span>
           <form method="POST" action="/api/auth/logout">
-            <button class="enlace enlace-btn" type="submit">Salir</button>
+            <button class="enlace enlace-btn" type="submit" data-i18n="header.salir">{t.salir}</button>
           </form>
         </>
       ) : (
         <>
-          <a class="enlace" href="/login">Ingresar</a>
-          <a class="enlace" href="/registro">Crear cuenta</a>
+          <a class="enlace" href="/login" data-i18n="header.ingresar">{t.ingresar}</a>
+          <a class="enlace" href="/registro" data-i18n="header.registro">{t.registro}</a>
         </>
       )
     }
-    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Tema oscuro" aria-pressed="false" title="Cambiar tema">
-      <span>Oscuro</span>
+    <label class="locale-picker" aria-label={t.idioma}>
+      <span class="sr-only" data-i18n="header.idioma">{t.idioma}</span>
+      <select data-locale-switch aria-label={t.idioma}>
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+      </select>
+    </label>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label={t.theme} aria-pressed="false" title={t.theme}>
+      <span data-i18n="header.dark">{t.dark}</span>
       <span class="theme-switch" aria-hidden="true"><span></span></span>
     </button>
     <CartButton />
@@ -74,6 +107,37 @@ const primerNombre = usuario?.nombre.split(' ')[0];
   }
 
   .acciones form { margin: 0; }
+
+  .locale-picker {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    padding: 0.12rem 0.6rem;
+  }
+
+  .locale-picker select {
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font: 600 0.82rem/1 var(--font-body);
+    padding: 0.38rem 0.2rem;
+    border-radius: 999px;
+    outline: none;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   .theme-toggle {
     display: inline-flex;
@@ -140,5 +204,7 @@ const primerNombre = usuario?.nombre.split(' ')[0];
     .top-bar { flex-wrap: wrap; justify-content: flex-start; gap: 0.7rem; }
     .brand { font-size: 1.45rem; }
     .acciones { flex: 1 1 100%; justify-content: flex-start; gap: 0.65rem 0.85rem; }
+    .locale-picker { order: 1; }
+    .theme-toggle { order: 2; }
   }
 </style>

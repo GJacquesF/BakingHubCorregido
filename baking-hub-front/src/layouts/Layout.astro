@@ -18,17 +18,25 @@ interface Props {
 const { titulo, descripcion, imagenSocial, imagenLcp, sidebar = false, categoriaActiva } = Astro.props;
 const title = titulo ? `${titulo} · Baking Hub` : 'Baking Hub';
 const description = descripcion ?? 'Descubre postres artesanales recién horneados en Baking Hub. Elige tus favoritos y recíbelos en tu punto de entrega.';
+const locale = Astro.currentLocale ?? 'es';
 const canonical = new URL(Astro.url.pathname, Astro.url.origin);
+const localePathname = Astro.url.pathname === '/' ? '/' : Astro.url.pathname;
+const alternateEs = new URL(localePathname.replace(/^\/en(?=\/|$)/, ''), Astro.url.origin);
+const alternateEn = new URL(localePathname === '/' ? '/en' : `/en${localePathname}`, Astro.url.origin);
 const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new URL('/favicon.svg', Astro.url.origin);
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={locale} data-locale={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#dca17d" />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={alternateEs.href} />
+    <link rel="alternate" hreflang="en" href={alternateEn.href} />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Baking Hub" />
     <meta property="og:title" content={title} />
@@ -70,6 +78,190 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
           button.setAttribute('aria-pressed', String(theme === 'dark'));
         });
       });
+
+      const translations = {
+        es: {
+          header: {
+            admin: 'Panel admin',
+            pedidos: 'Mis pedidos',
+            hola: 'Hola',
+            salir: 'Salir',
+            ingresar: 'Ingresar',
+            registro: 'Crear cuenta',
+            dark: 'Oscuro',
+            idioma: 'Idioma',
+            cart: 'Carrito',
+          },
+          cart: {
+            label: 'Carrito',
+            empty: 'Aún no has agregado nada delicioso.',
+            viewCatalog: 'Ver el catálogo',
+          },
+          product: {
+            soldOut: 'Agotado',
+            fewLeft: '¡Solo quedan {count}!',
+            details: 'Ver detalles',
+            addToCart: 'Añadir al carrito',
+            backCatalog: '← Volver al catálogo',
+            price: 'Precio: {price}',
+            outOfStock: 'Producto agotado por ahora',
+          },
+          home: {
+            welcome: 'Bienvenido a Baking Hub',
+            heroText: 'Los mejores postres horneados, directo del horno a tu mesa.',
+            whyUs: '¿Por qué elegirnos?',
+            whyText: 'En Baking Hub garantizamos ingredientes 100% orgánicos y entregas el mismo día para que disfrutes de la frescura en cada bocado.',
+            catalog: 'Catálogo',
+            emptyCategory: 'No hay productos en esta categoría.',
+          },
+          auth: {
+            loginTitle: 'Ingresar',
+            loginSubtitle: 'Entra para confirmar tus pedidos y revisar tu historial.',
+            email: 'Correo',
+            password: 'Contraseña',
+            noAccount: '¿No tienes cuenta?',
+            createAccount: 'Crear cuenta',
+            human: 'Confirmo que soy humano',
+            submitLogin: 'Ingresar',
+            registerTitle: 'Crear cuenta',
+            registerSubtitle: 'Con tu cuenta puedes pagar y ver tus pedidos anteriores.',
+            name: 'Nombre',
+            repeatPassword: 'Repite la contraseña',
+            alreadyAccount: '¿Ya tienes cuenta?',
+            submitRegister: 'Crear cuenta',
+            continue: 'Ir a iniciar sesión',
+          },
+          footer: 'Baking Hub © 2026. Proyecto Universitario - Práctica 6-2.',
+        },
+        en: {
+          header: {
+            admin: 'Admin panel',
+            pedidos: 'My orders',
+            hola: 'Hi',
+            salir: 'Log out',
+            ingresar: 'Sign in',
+            registro: 'Create account',
+            dark: 'Dark',
+            idioma: 'Language',
+            cart: 'Cart',
+          },
+          cart: {
+            label: 'Cart',
+            empty: 'You have not added anything delicious yet.',
+            viewCatalog: 'View catalog',
+          },
+          product: {
+            soldOut: 'Sold out',
+            fewLeft: 'Only {count} left!',
+            details: 'View details',
+            addToCart: 'Add to cart',
+            backCatalog: '← Back to catalog',
+            price: 'Price: {price}',
+            outOfStock: 'Product sold out for now',
+          },
+          home: {
+            welcome: 'Welcome to Baking Hub',
+            heroText: 'The best baked desserts, straight from the oven to your table.',
+            whyUs: 'Why choose us?',
+            whyText: 'At Baking Hub we guarantee 100% organic ingredients and same-day delivery so you can enjoy freshness in every bite.',
+            catalog: 'Catalog',
+            emptyCategory: 'There are no products in this category yet.',
+          },
+          auth: {
+            loginTitle: 'Sign in',
+            loginSubtitle: 'Log in to confirm your orders and review your history.',
+            email: 'Email',
+            password: 'Password',
+            noAccount: 'Do not have an account?',
+            createAccount: 'Create account',
+            human: 'I confirm I am human',
+            submitLogin: 'Sign in',
+            registerTitle: 'Create account',
+            registerSubtitle: 'With your account you can pay and review your previous orders.',
+            name: 'Name',
+            repeatPassword: 'Repeat password',
+            alreadyAccount: 'Already have an account?',
+            submitRegister: 'Create account',
+            continue: 'Go to sign in',
+          },
+          footer: 'Baking Hub © 2026. University project — Practice 6-2.',
+        },
+      };
+
+      const applyTranslation = (element) => {
+        if (!(element instanceof HTMLElement)) return;
+        const key = element.dataset.i18n;
+        if (!key) return;
+        const locale = document.documentElement.dataset.locale || 'es';
+        const parts = key.split('.');
+        let lookup = parts.reduce((acc, part) => acc?.[part], translations[locale]);
+        if (typeof lookup !== 'string') return;
+
+        const params = element.dataset.i18nParams ? JSON.parse(element.dataset.i18nParams) : {};
+        if (params && Object.keys(params).length > 0) {
+          lookup = lookup.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''));
+        }
+
+        if (element.dataset.i18nName) {
+          lookup = `${lookup}, ${element.dataset.i18nName}`;
+        }
+
+        if (element instanceof HTMLInputElement && (element.type === 'submit' || element.type === 'button')) {
+          element.value = lookup;
+          return;
+        }
+
+        if (element.tagName === 'OPTION') {
+          element.textContent = lookup;
+          return;
+        }
+
+        element.textContent = lookup;
+      };
+
+      const applyTranslations = () => {
+        document.querySelectorAll('[data-i18n]').forEach(applyTranslation);
+      };
+
+      const applyLocale = (locale) => {
+        const nextLocale = locale === 'en' ? 'en' : 'es';
+        document.documentElement.lang = nextLocale;
+        document.documentElement.dataset.locale = nextLocale;
+        document.querySelectorAll('[data-locale-switch]').forEach((select) => {
+          select.value = nextLocale;
+        });
+        try {
+          localStorage.setItem('baking-hub-locale', nextLocale);
+        } catch {}
+        applyTranslations();
+      };
+
+      const preferredLocale = (() => {
+        try {
+          const saved = localStorage.getItem('baking-hub-locale');
+          if (saved === 'es' || saved === 'en') return saved;
+        } catch {}
+
+        const browserLanguage = navigator.language || 'es';
+        return browserLanguage.toLowerCase().startsWith('en') ? 'en' : 'es';
+      })();
+
+      applyLocale(preferredLocale);
+
+      document.addEventListener('change', (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const select = target ? target.closest('[data-locale-switch]') : null;
+        if (!select) return;
+
+        const nextLocale = select.value === 'en' ? 'en' : 'es';
+        applyLocale(nextLocale);
+      });
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

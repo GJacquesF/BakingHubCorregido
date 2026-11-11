@@ -35,14 +35,14 @@ const filtrados = productos;
 >
   {categoria === 'Todas' && <Hero />}
 
-  {categoria === 'Todas' ? <h2 class="section-title">Catálogo: {categoria}</h2> : <h1 class="section-title">Catálogo: {categoria}</h1>}
+  {categoria === 'Todas' ? <h2 class="section-title" data-i18n="home.catalog">Catálogo: {categoria}</h2> : <h1 class="section-title" data-i18n="home.catalog">Catálogo: {categoria}</h1>}
 
   {error && <Alert>Error de conexión: {error}</Alert>}
 
   {
     !error && (
       <div class="product-grid">
-        {filtrados.length === 0 && <p class="estado-vacio">No hay productos en esta categoría.</p>}
+        {filtrados.length === 0 && <p class="estado-vacio" data-i18n="home.emptyCategory">No hay productos en esta categoría.</p>}
         {filtrados.map((p, index) => <ProductCard {...p} prioridad={index === 0} />)}
       </div>
     )

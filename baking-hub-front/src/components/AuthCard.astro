@@ -1,15 +1,17 @@
 ---
 interface Props {
   titulo: string;
+  tituloKey?: string;
   subtitulo?: string;
+  subtituloKey?: string;
 }
 
-const { titulo, subtitulo } = Astro.props;
+const { titulo, tituloKey, subtitulo, subtituloKey } = Astro.props;
 ---
 
 <section class="auth-card">
-  <h2>{titulo}</h2>
-  {subtitulo && <p class="subtitulo">{subtitulo}</p>}
+  <h2 data-i18n={tituloKey}>{titulo}</h2>
+  {subtitulo && <p class="subtitulo" data-i18n={subtituloKey}>{subtitulo}</p>}
   <slot />
   <p class="pie"><slot name="pie" /></p>
 </section>

@@ -5,7 +5,7 @@ const cantidad = totalArticulos.get();
 ---
 
 <a class="cart-button" href="/carrito" aria-live="polite" aria-atomic="true" aria-label={`Carrito, ${cantidad} artículos`}>
-  Carrito (<span data-cart-count>{cantidad}</span>)
+  <span data-i18n="cart.label">Carrito</span> (<span data-cart-count>{cantidad}</span>)
 </a>
 
 <script>
@@ -14,8 +14,13 @@ const cantidad = totalArticulos.get();
   totalArticulos.subscribe((cantidad) => {
     document.querySelectorAll<HTMLAnchorElement>('.cart-button[data-cart-count], a.cart-button').forEach((enlace) => {
       const contador = enlace.querySelector('[data-cart-count]');
+      const labelNode = enlace.querySelector('[data-i18n="cart.label"]');
       if (contador) contador.textContent = String(cantidad);
-      enlace.setAttribute('aria-label', `Carrito, ${cantidad} artículos`);
+
+      const locale = document.documentElement.dataset.locale || 'es';
+      const label = locale === 'en' ? 'Cart' : 'Carrito';
+      if (labelNode) labelNode.textContent = label;
+      enlace.setAttribute('aria-label', locale === 'en' ? `Cart, ${cantidad} items` : `Carrito, ${cantidad} artículos`);
     });
   });
 </script>

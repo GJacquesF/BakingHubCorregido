@@ -22,9 +22,13 @@ const { id, nombre, precio: valor, imagen, stock, prioridad = false } = Astro.pr
   <div class="tarjeta-producto-info">
     <h3>{nombre}</h3>
     <p class="precio">{precio(valor)}</p>
-    {stock <= 0 && <p class="existencia agotado">Agotado</p>}
-    {stock > 0 && stock <= 5 && <p class="existencia pocas">¡Solo quedan {stock}!</p>}
-    <a class="ver-detalle-btn" href={`/producto/${id}`}>Ver detalles</a>
+    {stock <= 0 && <p class="existencia agotado" data-i18n="product.soldOut">Agotado</p>}
+    {stock > 0 && stock <= 5 && (
+      <p class="existencia pocas" data-i18n="product.fewLeft" data-i18n-params={JSON.stringify({ count: stock })}>
+        ¡Solo quedan {stock}!
+      </p>
+    )}
+    <a class="ver-detalle-btn" href={`/producto/${id}`} data-i18n="product.details">Ver detalles</a>
   </div>
 </article>
 

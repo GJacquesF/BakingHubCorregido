@@ -58,19 +58,21 @@ if (Astro.request.method === 'POST') {
 <Layout titulo="Crear cuenta">
   <AuthCard
     titulo="Crear cuenta"
+    tituloKey="auth.registerTitle"
     subtitulo="Con tu cuenta puedes pagar y ver tus pedidos anteriores."
+    subtituloKey="auth.registerSubtitle"
   >
     {error && <Alert>{error}</Alert>}
     {mensaje && <p role="status">{mensaje}</p>}
     {registroExitoso ? (
-      <p><a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>Ir a iniciar sesión</a></p>
+      <p><a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.continue">Ir a iniciar sesión</a></p>
     ) : (
       <>
         <form method="POST">
-          <FormField label="Nombre" name="nombre" autocomplete="name" value={nombre} minlength={2} />
-          <FormField label="Correo" name="email" type="email" autocomplete="email" value={email} />
-          <FormField label="Contraseña (mínimo 8 caracteres)" name="password" type="password" autocomplete="new-password" minlength={8} />
-          <FormField label="Repite la contraseña" name="confirmar" type="password" autocomplete="new-password" minlength={8} />
+          <FormField label="Nombre" translationKey="auth.name" name="nombre" autocomplete="name" value={nombre} minlength={2} />
+          <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
+          <FormField label="Contraseña (mínimo 8 caracteres)" translationKey="auth.password" name="password" type="password" autocomplete="new-password" minlength={8} />
+          <FormField label="Repite la contraseña" translationKey="auth.repeatPassword" name="confirmar" type="password" autocomplete="new-password" minlength={8} />
           {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ? (
             <div class="turnstile-wrap">
               <div
@@ -83,17 +85,18 @@ if (Astro.request.method === 'POST') {
           ) : (
             <label class="human-check">
               <input type="checkbox" name="turnstile-human" />
-              <span>Confirmo que soy humano</span>
+              <span data-i18n="auth.human">Confirmo que soy humano</span>
             </label>
           )}
-          <button class="btn-primario" type="submit">Crear cuenta</button>
+          <button class="btn-primario" type="submit" data-i18n="auth.submitRegister">Crear cuenta</button>
         </form>
         <p class="separador-auth">O continúa con</p>
         <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} />
       </>
     )}
     <Fragment slot="pie">
-      ¿Ya tienes cuenta? <a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>Ingresar</a>
+      <span data-i18n="auth.alreadyAccount">¿Ya tienes cuenta?</span>{' '}
+      <a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.submitLogin">Ingresar</a>
     </Fragment>
   </AuthCard>
 </Layout>

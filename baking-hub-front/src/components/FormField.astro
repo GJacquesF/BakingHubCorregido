@@ -1,6 +1,7 @@
 ---
 interface Props {
   label: string;
+  translationKey?: string;
   name: string;
   type?: 'text' | 'email' | 'password';
   autocomplete?: string;
@@ -9,11 +10,11 @@ interface Props {
   required?: boolean;
 }
 
-const { label, name, type = 'text', autocomplete, value = '', minlength, required = true } = Astro.props;
+const { label, translationKey, name, type = 'text', autocomplete, value = '', minlength, required = true } = Astro.props;
 ---
 
 <div class="campo">
-  <label for={name}>{label}</label>
+  <label for={name} data-i18n={translationKey}>{label}</label>
   <input id={name} {name} {type} {autocomplete} {value} {minlength} {required} />
 </div>
 

@@ -46,11 +46,16 @@ if (Astro.request.method === 'POST') {
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <Layout titulo="Ingresar">
-  <AuthCard titulo="Ingresar" subtitulo="Entra para confirmar tus pedidos y revisar tu historial.">
+  <AuthCard
+    titulo="Ingresar"
+    tituloKey="auth.loginTitle"
+    subtitulo="Entra para confirmar tus pedidos y revisar tu historial."
+    subtituloKey="auth.loginSubtitle"
+  >
     {error && <Alert>{error}</Alert>}
     <form method="POST">
-      <FormField label="Correo" name="email" type="email" autocomplete="email" value={email} />
-      <FormField label="Contraseña" name="password" type="password" autocomplete="current-password" />
+      <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
+      <FormField label="Contraseña" translationKey="auth.password" name="password" type="password" autocomplete="current-password" />
       {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ? (
         <div class="turnstile-wrap">
           <div
@@ -63,15 +68,16 @@ if (Astro.request.method === 'POST') {
       ) : (
         <label class="human-check">
           <input type="checkbox" name="turnstile-human" />
-          <span>Confirmo que soy humano</span>
+          <span data-i18n="auth.human">Confirmo que soy humano</span>
         </label>
       )}
-      <button class="btn-primario" type="submit">Ingresar</button>
+      <button class="btn-primario" type="submit" data-i18n="auth.submitLogin">Ingresar</button>
     </form>
     <p class="separador-auth">O continúa con</p>
     <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} />
     <Fragment slot="pie">
-      ¿No tienes cuenta? <a href={`/registro${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>Crear cuenta</a>
+      <span data-i18n="auth.noAccount">¿No tienes cuenta?</span>{' '}
+      <a href={`/registro${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.createAccount">Crear cuenta</a>
     </Fragment>
   </AuthCard>
 </Layout>

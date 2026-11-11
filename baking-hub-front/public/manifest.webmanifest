@@ -1,0 +1,10 @@
+{
+    "name": "Baking Hub",
+    "short_name": "BakingHub",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f3ece4",
+    "theme_color": "#dca17d",
+    "description": "Tienda de repostería artesanal con pedidos y entrega a domicilio.",
+    "lang": "es"
+}
