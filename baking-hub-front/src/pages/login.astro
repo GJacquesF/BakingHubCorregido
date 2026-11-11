@@ -20,15 +20,18 @@ if (Astro.request.method === 'POST') {
   const password = String(datos.get('password') ?? '');
   const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
   const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
+  const humanCheck = String(datos.get('turnstile-human') ?? '') === 'on';
 
   if (turnstileEnabled && !turnstileToken) {
     error = 'Completa la verificación de seguridad antes de iniciar sesión.';
+  } else if (!turnstileEnabled && !humanCheck) {
+    error = 'Marca la casilla para confirmar que eres humano.';
   } else {
     try {
       const { login } = await graphql<{ login: { token: string } }>(LOGIN, {
         email,
         password,
-        turnstileToken: turnstileEnabled ? turnstileToken : null,
+        turnstileToken: turnstileEnabled ? turnstileToken : humanCheck ? 'manual-human-check' : null,
       });
       guardarSesion(Astro.cookies, login.token);
       return Astro.redirect(next, 303);
@@ -48,7 +51,7 @@ if (Astro.request.method === 'POST') {
     <form method="POST">
       <FormField label="Correo" name="email" type="email" autocomplete="email" value={email} />
       <FormField label="Contraseña" name="password" type="password" autocomplete="current-password" />
-      {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY && (
+      {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ? (
         <div class="turnstile-wrap">
           <div
             class="cf-turnstile"
@@ -57,6 +60,11 @@ if (Astro.request.method === 'POST') {
             data-size="normal"
           />
         </div>
+      ) : (
+        <label class="human-check">
+          <input type="checkbox" name="turnstile-human" />
+          <span>Confirmo que soy humano</span>
+        </label>
       )}
       <button class="btn-primario" type="submit">Ingresar</button>
     </form>
@@ -79,5 +87,24 @@ if (Astro.request.method === 'POST') {
     display: flex;
     justify-content: center;
     margin: 1rem 0 0.5rem;
+  }
+
+  .human-check {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 1rem 0 0.85rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--espresso-soft);
+    font-size: 0.95rem;
+  }
+
+  .human-check input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--melon);
   }
 </style>
