@@ -96,6 +96,10 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
             label: 'Carrito',
             empty: 'Aún no has agregado nada delicioso.',
             viewCatalog: 'Ver el catálogo',
+            checkout: 'Ir al checkout',
+            total: 'Total',
+            remove: 'Quitar',
+            quantity: 'Cantidad',
           },
           product: {
             soldOut: 'Agotado',
@@ -131,6 +135,25 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
             submitRegister: 'Crear cuenta',
             continue: 'Ir a iniciar sesión',
           },
+          admin: {
+            title: 'Panel admin',
+            summary: 'Resumen',
+            resumenTienda: 'Resumen de la tienda',
+            saludo: 'Hola',
+            ventas: 'Ventas cobradas',
+            pagados: 'Pedidos pagados',
+            pendientes: 'Pedidos pendientes de pago',
+            catalogo: 'Productos en catálogo',
+            agotados: 'Productos agotados',
+            bajoStock: 'Con stock bajo (5 o menos)',
+            clientes: 'Clientes registrados',
+            suspendidos: 'Cuentas suspendidas',
+            accesos: 'Accesos rápidos',
+            agregarInventario: 'Agregar inventario',
+            gestionarClientes: 'Gestionar clientes',
+            buscar: 'Buscar',
+            limpiar: 'Limpiar',
+          },
           footer: 'Baking Hub © 2026. Proyecto Universitario - Práctica 6-2.',
         },
         en: {
@@ -149,6 +172,10 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
             label: 'Cart',
             empty: 'You have not added anything delicious yet.',
             viewCatalog: 'View catalog',
+            checkout: 'Go to checkout',
+            total: 'Total',
+            remove: 'Remove',
+            quantity: 'Quantity',
           },
           product: {
             soldOut: 'Sold out',
@@ -183,6 +210,25 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
             alreadyAccount: 'Already have an account?',
             submitRegister: 'Create account',
             continue: 'Go to sign in',
+          },
+          admin: {
+            title: 'Admin panel',
+            summary: 'Summary',
+            resumenTienda: 'Store summary',
+            saludo: 'Hi',
+            ventas: 'Collected sales',
+            pagados: 'Paid orders',
+            pendientes: 'Outstanding payments',
+            catalogo: 'Products in catalog',
+            agotados: 'Out of stock products',
+            bajoStock: 'Low stock (5 or less)',
+            clientes: 'Registered customers',
+            suspendidos: 'Suspended accounts',
+            accesos: 'Quick access',
+            agregarInventario: 'Add inventory',
+            gestionarClientes: 'Manage customers',
+            buscar: 'Search',
+            limpiar: 'Clear',
           },
           footer: 'Baking Hub © 2026. University project — Practice 6-2.',
         },
@@ -223,6 +269,16 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         document.querySelectorAll('[data-i18n]').forEach(applyTranslation);
       };
 
+      const getStoredLocale = () => {
+        try {
+          const saved = localStorage.getItem('baking-hub-locale');
+          if (saved === 'es' || saved === 'en') return saved;
+        } catch {}
+
+        const browserLanguage = navigator.language || 'es';
+        return browserLanguage.toLowerCase().startsWith('en') ? 'en' : 'es';
+      };
+
       const applyLocale = (locale) => {
         const nextLocale = locale === 'en' ? 'en' : 'es';
         document.documentElement.lang = nextLocale;
@@ -236,17 +292,7 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         applyTranslations();
       };
 
-      const preferredLocale = (() => {
-        try {
-          const saved = localStorage.getItem('baking-hub-locale');
-          if (saved === 'es' || saved === 'en') return saved;
-        } catch {}
-
-        const browserLanguage = navigator.language || 'es';
-        return browserLanguage.toLowerCase().startsWith('en') ? 'en' : 'es';
-      })();
-
-      applyLocale(preferredLocale);
+      applyLocale(getStoredLocale());
 
       document.addEventListener('change', (event) => {
         const target = event.target instanceof Element ? event.target : null;
@@ -257,9 +303,17 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         applyLocale(nextLocale);
       });
 
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'baking-hub-locale') {
+          applyLocale(getStoredLocale());
+        }
+      });
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+          if (!isSecure) return;
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
         });
       }
     </script>

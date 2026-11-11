@@ -5,12 +5,13 @@ interface Props {
 
 const { activa } = Astro.props;
 const enlaces = [
-  { clave: 'resumen', href: '/admin', texto: 'Resumen' },
-  { clave: 'pedidos', href: '/admin/pedidos', texto: 'Pedidos' },
-  { clave: 'inventario', href: '/admin/inventario', texto: 'Inventario' },
-  { clave: 'entregas', href: '/admin/entregas', texto: 'Entregas' },
-  { clave: 'usuarios', href: '/admin/usuarios', texto: 'Clientes' },
+  { clave: 'resumen', href: '/admin', texto: 'Resumen', textoEn: 'Summary' },
+  { clave: 'pedidos', href: '/admin/pedidos', texto: 'Pedidos', textoEn: 'Orders' },
+  { clave: 'inventario', href: '/admin/inventario', texto: 'Inventario', textoEn: 'Inventory' },
+  { clave: 'entregas', href: '/admin/entregas', texto: 'Entregas', textoEn: 'Deliveries' },
+  { clave: 'usuarios', href: '/admin/usuarios', texto: 'Clientes', textoEn: 'Customers' },
 ] as const;
+const locale = Astro.currentLocale ?? 'es';
 ---
 
 <nav class="admin-nav" aria-label="Panel de administración">
@@ -18,7 +19,7 @@ const enlaces = [
   {
     enlaces.map((e) => (
       <a href={e.href} class:list={['admin-enlace', { activa: activa === e.clave }]} aria-current={activa === e.clave ? 'page' : undefined}>
-        {e.texto}
+        {locale === 'en' ? e.textoEn : e.texto}
       </a>
     ))
   }

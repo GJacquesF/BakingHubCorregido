@@ -4,8 +4,8 @@ import CartView from '../components/CartView';
 ---
 
 <Layout titulo="Carrito" sidebar>
-  <h2 class="section-title">Tu carrito de compras</h2>
+  <h2 class="section-title" data-i18n="cart.label">Tu carrito de compras</h2>
   <CartView client:only="react">
-    <p slot="fallback" class="estado-vacio">Cargando tu carrito…</p>
+    <p slot="fallback" class="estado-vacio" data-i18n="cart.loading">Cargando tu carrito…</p>
   </CartView>
 </Layout>

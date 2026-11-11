@@ -1,6 +1,7 @@
 const SHELL_CACHE = "bakinghub-shell-v1";
 const DYNAMIC_CACHE = "bakinghub-dynamic-v1";
-const APP_SHELL = ["/", "/offline.html", "/favicon.svg", "/manifest.webmanifest"];
+const OFFLINE_URL = "/offline.html";
+const APP_SHELL = ["/", OFFLINE_URL, "/favicon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", event => {
     event.waitUntil(
@@ -28,48 +29,38 @@ self.addEventListener("fetch", event => {
     const request = event.request;
     const url = new URL(request.url);
 
-    if (request.method !== "GET" || url.origin !== self.location.origin) {
-        return;
-    }
-
-    if (url.pathname === "/offline.html") {
-        return;
-    }
+    if (request.method !== "GET" || url.origin !== self.location.origin) return;
+    if (url.pathname === OFFLINE_URL) return;
 
     if (request.mode === "navigate") {
         event.respondWith(
             fetch(request)
                 .then(response => {
-                    const cloned = response.clone();
-                    caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, cloned));
+                    const clone = response.clone();
+                    caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
                     return response;
                 })
-                .catch(() => caches.match("/offline.html")),
+                .catch(() => caches.match(OFFLINE_URL) || caches.match("/")),
         );
         return;
     }
 
-    if (
-        url.pathname.endsWith(".js") ||
-        url.pathname.endsWith(".css") ||
-        url.pathname.endsWith(".svg") ||
-        url.pathname.endsWith(".png") ||
-        url.pathname.endsWith(".jpg") ||
-        url.pathname.endsWith(".jpeg") ||
-        url.pathname.endsWith(".webp") ||
-        url.pathname.endsWith(".ico")
-    ) {
+    const isStaticAsset = [".js", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico", ".json"].some(extension =>
+        url.pathname.endsWith(extension),
+    );
+
+    if (isStaticAsset) {
         event.respondWith(
             caches.match(request).then(cached => {
                 if (cached) return cached;
 
                 return fetch(request)
                     .then(response => {
-                        const cloned = response.clone();
-                        caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, cloned));
+                        const clone = response.clone();
+                        caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
                         return response;
                     })
-                    .catch(() => caches.match("/offline.html"));
+                    .catch(() => caches.match(OFFLINE_URL));
             }),
         );
         return;
@@ -78,10 +69,10 @@ self.addEventListener("fetch", event => {
     event.respondWith(
         fetch(request)
             .then(response => {
-                const cloned = response.clone();
-                caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, cloned));
+                const clone = response.clone();
+                caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
                 return response;
             })
-            .catch(() => caches.match(request).then(cached => cached || caches.match("/offline.html"))),
+            .catch(() => caches.match(request).then(cached => cached || caches.match(OFFLINE_URL))),
     );
 });

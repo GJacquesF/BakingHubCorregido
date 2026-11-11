@@ -18,8 +18,8 @@ try {
 ---
 
 <AdminLayout titulo="Resumen" seccion="resumen">
-  <h2 class="admin-titulo">Resumen de la tienda</h2>
-  <p class="admin-subtitulo">Hola, {Astro.locals.usuario?.nombre}. Esto es lo más importante de hoy.</p>
+  <h2 class="admin-titulo" data-i18n="admin.resumenTienda">Resumen de la tienda</h2>
+  <p class="admin-subtitulo" data-i18n="admin.saludo">Hola, {Astro.locals.usuario?.nombre}. Esto es lo más importante de hoy.</p>
   <AdminLiveUpdates client:load />
 
   {error && <Alert>{error}</Alert>}
