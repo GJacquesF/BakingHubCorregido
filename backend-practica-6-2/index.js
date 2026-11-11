@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { randomInt } from 'node:crypto';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { PubSub } from 'graphql-subscriptions'; // para el pubsub de pedidos pagados
@@ -32,42 +31,9 @@ import {
   verificarFirmaWebhook,
 } from './pagos.js';
 import { OAuth2Client } from 'google-auth-library';
-import nodemailer from 'nodemailer';
 const googleClient = process.env.GOOGLE_CLIENT_ID
   ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
   : null;
-
-async function enviarCodigoVerificacion({ nombre, email, codigo }) {
-  const SMTP_USER = process.env.SMTP_USER?.trim();
-  const SMTP_PASS = process.env.SMTP_PASS?.replace(/\s/g, '');
-  if (!SMTP_USER || !SMTP_PASS) {
-    throw new Error('El envío de correo no está configurado (SMTP_USER/SMTP_PASS).');
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-  const nombreHtml = nombre.replace(/[&<>"']/g, (caracter) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  })[caracter]);
-
-  await transporter.sendMail({
-    from: `"Baking Hub" <${SMTP_USER}>`,
-    to: email,
-    subject: 'Verifica tu cuenta en Baking Hub',
-    text: `Hola ${nombre}, tu código de verificación es ${codigo}. Vence en 15 minutos.`,
-    html: `<h2>¡Hola ${nombreHtml}!</h2><p>Tu código de verificación es: <strong>${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
-  });
-}
-
-function generarCodigoVerificacion() {
-  return String(randomInt(100000, 1000000));
-}
 
 const { Pool } = pkg;
 const pubsub = new PubSub(); // para publicar los eventos de pedido pagado a los suscriptores
@@ -133,17 +99,10 @@ try {
     -- Gestión de clientes: una cuenta suspendida no puede iniciar sesión.
     ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
 
-    -- Autenticación por correo y Google. Las cuentas existentes quedan verificadas;
-    -- el registro nuevo establece FALSE explícitamente y debe validar el código.
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN NOT NULL DEFAULT TRUE;
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS codigo_verificacion VARCHAR(6);
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS codigo_verificacion_expira TIMESTAMPTZ;
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS codigo_verificacion_intentos INT NOT NULL DEFAULT 0;
-    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS codigo_verificacion_enviado TIMESTAMPTZ;
+    -- Inicio de sesión con Google.
     ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
     ALTER TABLE usuarios ALTER COLUMN password_hash DROP NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS usuarios_google_id_uidx ON usuarios (google_id);
-    UPDATE usuarios SET email_verificado = TRUE WHERE email_verificado IS NULL;
 
     -- Pagos (Mercado Pago): método elegido y datos del cobro.
     ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS metodo_pago VARCHAR(20);
@@ -348,8 +307,6 @@ type Query {
 type Mutation {
   registrar(nombre: String!, email: String!, password: String!): RegistroPayload!
   login(email: String!, password: String!): AuthPayload!
-  verificarCorreo(email: String!, codigo: String!): Boolean!
-  reenviarCodigoVerificacion(email: String!): Boolean!
   loginConGoogle(idToken: String!): AuthPayload!
 
   crearPedido(productos: [ID!]!, metodoPago: String!, tarjeta: TarjetaInput, puntoEntregaId: ID): Pedido
@@ -787,47 +744,19 @@ const resolvers = {
       const emailAdmin = (process.env.ADMIN_EMAIL ?? '').trim().toLowerCase();
       const esAdmin = Boolean(emailAdmin && email === emailAdmin);
       const hash = await hashPassword(password);
-      const codigo = generarCodigoVerificacion();
       try {
         await pool.query(
           `INSERT INTO usuarios
-             (nombre, email, password_hash, rol, email_verificado, codigo_verificacion,
-                codigo_verificacion_expira, codigo_verificacion_intentos, codigo_verificacion_enviado)
-             VALUES ($1, $2, $3, $4, FALSE, $5, NOW() + INTERVAL '15 minutes', 0, NULL)`,
-          [nombre, email, hash, esAdmin ? 'admin' : 'cliente', codigo]
+             (nombre, email, password_hash, rol)
+             VALUES ($1, $2, $3, $4)`,
+          [nombre, email, hash, esAdmin ? 'admin' : 'cliente']
         );
       } catch (error) {
-        if (error.code === '23505') {
-          const existente = await pool.query(
-            'SELECT email_verificado FROM usuarios WHERE email = $1',
-            [email]
-          );
-          if (existente.rows[0] && !existente.rows[0].email_verificado) {
-            throw new GraphQLError(
-              'Esta cuenta ya está registrada y necesita verificar el correo. Solicita un nuevo código.',
-              { extensions: { code: 'EMAIL_NOT_VERIFIED' } }
-            );
-          }
-          throw errorDeUsuario('Ese correo ya está registrado');
-        }
+        if (error.code === '23505') throw errorDeUsuario('Ese correo ya está registrado');
         console.error('Error al registrar usuario:', error);
         throw new Error('Error al registrar usuario');
       }
-      try {
-        await enviarCodigoVerificacion({ nombre, email, codigo });
-        await pool.query(
-          'UPDATE usuarios SET codigo_verificacion_enviado = NOW() WHERE email = $1 AND codigo_verificacion = $2',
-          [email, codigo]
-        );
-      } catch (error) {
-        console.error('No se pudo enviar el código de verificación:', error);
-        throw new GraphQLError(
-          'La cuenta quedó pendiente de verificación, pero no se pudo enviar el correo. Usa la opción para reenviar el código.',
-          { extensions: { code: 'EMAIL_DELIVERY_FAILED' } }
-        );
-      }
-
-      return { mensaje: 'Te enviamos un código de verificación. Revisa tu correo.' };
+      return { mensaje: 'Cuenta creada. Ya puedes iniciar sesión.' };
     },
 
     login: async (_, { email, password }) => {
@@ -843,85 +772,8 @@ const resolvers = {
       // Se revisa después de la contraseña para no revelar a desconocidos qué correos existen.
       if (!fila.activo) throw errorNoAutenticado('Tu cuenta está suspendida. Contacta a la tienda para reactivarla.');
       fallosLogin.delete(email);
-      if (!fila.email_verificado) {
-        throw new GraphQLError(
-          'Tu correo aún no está verificado. Confírmalo para poder iniciar sesión.',
-          { extensions: { code: 'EMAIL_NOT_VERIFIED' } }
-        );
-      }
       const { password_hash, ...usuario } = fila;
       return { token: firmarToken(usuario), usuario };
-    },
-
-    verificarCorreo: async (_, { email, codigo }) => {
-      const correo = String(email).trim().toLowerCase().slice(0, 254);
-      if (!/^\d{6}$/.test(codigo)) throw errorDeUsuario('El código debe tener 6 dígitos');
-
-      const verificado = await pool.query(
-        `UPDATE usuarios
-            SET email_verificado = TRUE,
-                codigo_verificacion = NULL,
-                codigo_verificacion_expira = NULL,
-                codigo_verificacion_intentos = 0,
-                codigo_verificacion_enviado = NULL
-          WHERE email = $1
-            AND email_verificado = FALSE
-            AND codigo_verificacion = $2
-            AND codigo_verificacion_expira > NOW()
-            AND codigo_verificacion_intentos < 5
-          RETURNING id`,
-        [correo, codigo]
-      );
-      if (verificado.rowCount === 1) return true;
-
-      await pool.query(
-        `UPDATE usuarios
-            SET codigo_verificacion_intentos = codigo_verificacion_intentos + 1,
-                codigo_verificacion = CASE
-                  WHEN codigo_verificacion_intentos >= 4 THEN NULL
-                  ELSE codigo_verificacion
-                END
-          WHERE email = $1
-            AND email_verificado = FALSE
-            AND codigo_verificacion IS NOT NULL
-            AND codigo_verificacion_expira > NOW()
-            AND codigo_verificacion_intentos < 5`,
-        [correo]
-      );
-      throw errorDeUsuario('El código es incorrecto, venció o superó el límite de intentos. Solicita uno nuevo.');
-    },
-
-    reenviarCodigoVerificacion: async (_, { email }) => {
-      const correo = String(email).trim().toLowerCase().slice(0, 254);
-      const codigo = generarCodigoVerificacion();
-      const resultado = await pool.query(
-        `UPDATE usuarios
-            SET codigo_verificacion = $2,
-                codigo_verificacion_expira = NOW() + INTERVAL '15 minutes',
-                codigo_verificacion_intentos = 0,
-                codigo_verificacion_enviado = NOW()
-          WHERE email = $1
-            AND email_verificado = FALSE
-            AND (codigo_verificacion_enviado IS NULL OR codigo_verificacion_enviado < NOW() - INTERVAL '60 seconds')
-          RETURNING nombre, email`,
-        [correo, codigo]
-      );
-      const pendiente = resultado.rows[0];
-      if (pendiente) {
-        try {
-          await enviarCodigoVerificacion({ ...pendiente, codigo });
-        } catch (error) {
-          await pool.query(
-            'UPDATE usuarios SET codigo_verificacion_enviado = NULL WHERE email = $1 AND codigo_verificacion = $2',
-            [correo, codigo]
-          );
-          console.error('No se pudo reenviar el código de verificación:', error);
-          throw new GraphQLError('No se pudo enviar el correo. Inténtalo de nuevo más tarde.', {
-            extensions: { code: 'EMAIL_DELIVERY_FAILED' },
-          });
-        }
-      }
-      return true;
     },
 
     loginConGoogle: async (_, { idToken }) => {
@@ -969,11 +821,6 @@ const resolvers = {
         const actualizado = await pool.query(
           `UPDATE usuarios
               SET google_id = $1,
-                  email_verificado = TRUE,
-                  codigo_verificacion = NULL,
-                  codigo_verificacion_expira = NULL,
-                  codigo_verificacion_intentos = 0,
-                  codigo_verificacion_enviado = NULL,
                   rol = CASE WHEN $3 <> '' AND lower(email) = $3 THEN 'admin' ELSE rol END
             WHERE id = $2
             RETURNING ${USUARIO_PUBLICO}`,
@@ -982,8 +829,8 @@ const resolvers = {
         usuario = actualizado.rows[0];
       } else {
         const nuevo = await pool.query(
-          `INSERT INTO usuarios (nombre, email, password_hash, rol, email_verificado, google_id)
-           VALUES ($1, $2, NULL, $3, TRUE, $4)
+          `INSERT INTO usuarios (nombre, email, password_hash, rol, google_id)
+           VALUES ($1, $2, NULL, $3, $4)
            RETURNING ${USUARIO_PUBLICO}`,
           [nombre, email, email === emailAdmin && emailAdmin ? 'admin' : 'cliente', googleId]
         );

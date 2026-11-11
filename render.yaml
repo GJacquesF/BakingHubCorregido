@@ -43,7 +43,3 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false

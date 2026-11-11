@@ -74,18 +74,6 @@ export const REGISTRAR = `
   }
 `;
 
-export const VERIFICAR_CORREO = `
-  mutation VerificarCorreo($email: String!, $codigo: String!) {
-    verificarCorreo(email: $email, codigo: $codigo)
-  }
-`;
-
-export const REENVIAR_CODIGO_VERIFICACION = `
-  mutation ReenviarCodigoVerificacion($email: String!) {
-    reenviarCodigoVerificacion(email: $email)
-  }
-`;
-
 /* ---------------------------------- Panel de administración ---------------------------------- */
 
 export const ADMIN_RESUMEN = `

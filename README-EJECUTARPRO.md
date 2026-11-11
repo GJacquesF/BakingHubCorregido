@@ -62,20 +62,15 @@ MP_WEBHOOK_SECRET=xxxxxxxxxxxxxxxx
 BACKEND_PUBLIC_URL=https://url-publica-del-backend.example
 FRONTEND_URL=https://url-publica-de-astro.example
 GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
-SMTP_USER=tu-cuenta@gmail.com
-SMTP_PASS=tu-contrasena-de-aplicacion
 ```
 
 En Google Cloud crea un cliente OAuth de tipo aplicación web y agrega como orígenes autorizados
-`http://localhost:4321` y el dominio público del frontend. En Gmail utiliza una contraseña de aplicación,
-no la contraseña normal de la cuenta. Puedes pegarla con o sin los espacios que Gmail muestra. Si no se
-envían los códigos, revisa los registros del backend y confirma que `SMTP_USER` y `SMTP_PASS` estén definidos
-correctamente. `GOOGLE_CLIENT_ID`, `SMTP_USER` y `SMTP_PASS` van únicamente en el
-entorno del backend (Render y `.env` local); `PUBLIC_GOOGLE_CLIENT_ID` va en el frontend y Netlify.
+`http://localhost:4321` y el dominio público del frontend. `GOOGLE_CLIENT_ID` va únicamente en el entorno
+del backend; `PUBLIC_GOOGLE_CLIENT_ID` va en el frontend y Netlify.
 
-El backend agrega automáticamente las columnas nuevas de autenticación en el arranque. En Supabase debes
-cargar `db.sql` una vez para crear las tablas iniciales, pero no necesitas correr manualmente SQL adicional
-para las columnas de verificación y Google. Las cuentas que ya existían quedan verificadas.
+El backend agrega automáticamente la columna de Google en el arranque. En Supabase debes cargar `db.sql` una
+vez para crear las tablas iniciales, pero no necesitas correr manualmente SQL adicional. Las cuentas con correo
+y contraseña pueden iniciar sesión sin verificación por correo.
 
 `FRONTEND_URL` debe ser la URL HTTPS pública de Astro para que Mercado Pago vuelva al pedido y
 redirija automáticamente después de aprobar el pago. Si ngrok apunta solo al frontend, no uses esa

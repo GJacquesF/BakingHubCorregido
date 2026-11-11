@@ -5,7 +5,7 @@ import FormField from '../components/FormField.astro';
 import Alert from '../components/Alert.astro';
 import GoogleSignIn from '../components/GoogleSignIn';
 import { graphql, ApiError } from '../lib/graphql';
-import { REENVIAR_CODIGO_VERIFICACION, REGISTRAR, VERIFICAR_CORREO } from '../lib/queries';
+import { REGISTRAR } from '../lib/queries';
 import { rutaSegura } from '../lib/auth';
 
 const next = rutaSegura(Astro.url.searchParams.get('next'));
@@ -15,65 +15,27 @@ let error: string | null = null;
 let mensaje: string | null = null;
 let nombre = '';
 let email = (Astro.url.searchParams.get('email') ?? '').trim();
-let codigo = '';
-let pasoVerificacion = Astro.url.searchParams.get('verificar') === '1' && Boolean(email);
-let correoVerificado = false;
+let registroExitoso = false;
 
 if (Astro.request.method === 'POST') {
   const datos = await Astro.request.formData();
-  const accion = String(datos.get('accion') ?? 'registrar');
   email = String(datos.get('email') ?? '').trim();
   nombre = String(datos.get('nombre') ?? '').trim();
+  const password = String(datos.get('password') ?? '');
+  const confirmar = String(datos.get('confirmar') ?? '');
 
-  if (accion === 'verificar') {
-    codigo = String(datos.get('codigo') ?? '').trim();
-    pasoVerificacion = true;
+  if (password !== confirmar) {
+    error = 'Las contraseñas no coinciden.';
+  } else {
     try {
-      await graphql<{ verificarCorreo: boolean }>(VERIFICAR_CORREO, { email, codigo });
-      correoVerificado = true;
-      mensaje = 'Correo verificado. Ya puedes iniciar sesión.';
+      await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, { nombre, email, password });
+      registroExitoso = true;
+      mensaje = 'Cuenta creada. Ya puedes iniciar sesión.';
     } catch (e) {
       error =
         e instanceof ApiError && e.codigo === 'BAD_USER_INPUT'
           ? e.message
-          : 'No se pudo verificar el correo. Inténtalo de nuevo.';
-    }
-  } else if (accion === 'reenviar') {
-    pasoVerificacion = true;
-    try {
-      await graphql<{ reenviarCodigoVerificacion: boolean }>(REENVIAR_CODIGO_VERIFICACION, { email });
-      mensaje = 'Si la cuenta está pendiente de verificación y puede recibir otro código, lo enviaremos a ese correo.';
-    } catch (e) {
-      error =
-        e instanceof ApiError && e.codigo === 'EMAIL_DELIVERY_FAILED'
-          ? e.message
-          : 'No se pudo solicitar otro código. Inténtalo más tarde.';
-    }
-  } else {
-    const password = String(datos.get('password') ?? '');
-    const confirmar = String(datos.get('confirmar') ?? '');
-
-    if (password !== confirmar) {
-      error = 'Las contraseñas no coinciden.';
-    } else {
-      try {
-        await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, { nombre, email, password });
-        pasoVerificacion = true;
-        mensaje = 'Te enviamos un código de 6 dígitos. Revisa tu correo; vence en 15 minutos.';
-      } catch (e) {
-        if (e instanceof ApiError && e.codigo === 'EMAIL_DELIVERY_FAILED') {
-          pasoVerificacion = true;
-          error = e.message;
-        } else if (e instanceof ApiError && e.codigo === 'EMAIL_NOT_VERIFIED') {
-          pasoVerificacion = true;
-          mensaje = e.message;
-        } else {
-          error =
-            e instanceof ApiError && e.codigo === 'BAD_USER_INPUT'
-              ? e.message
-              : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
-        }
-      }
+          : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
     }
   }
 }
@@ -81,40 +43,13 @@ if (Astro.request.method === 'POST') {
 
 <Layout titulo="Crear cuenta">
   <AuthCard
-    titulo={pasoVerificacion ? 'Verifica tu correo' : 'Crear cuenta'}
-    subtitulo={pasoVerificacion ? `Confirma el correo ${email}. Si no recibiste el código, solicita uno nuevo.` : 'Con tu cuenta puedes pagar y ver tus pedidos anteriores.'}
+    titulo="Crear cuenta"
+    subtitulo="Con tu cuenta puedes pagar y ver tus pedidos anteriores."
   >
     {error && <Alert>{error}</Alert>}
     {mensaje && <p role="status">{mensaje}</p>}
-    {pasoVerificacion ? (
-      correoVerificado ? (
-        <p><a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>Ir a ingresar</a></p>
-      ) : (
-        <>
-          <form method="POST">
-            <input type="hidden" name="accion" value="verificar" />
-            <input type="hidden" name="email" value={email} />
-            <label for="codigo">Código de verificación</label>
-            <input
-              id="codigo"
-              name="codigo"
-              type="text"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxlength="6"
-              required
-              value={codigo}
-            />
-            <button class="btn-primario" type="submit">Confirmar código</button>
-          </form>
-          <form method="POST" class="reenviar-form">
-            <input type="hidden" name="accion" value="reenviar" />
-            <input type="hidden" name="email" value={email} />
-            <button type="submit" class="btn-enlace">Reenviar código</button>
-          </form>
-        </>
-      )
+    {registroExitoso ? (
+      <p><a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>Ir a iniciar sesión</a></p>
     ) : (
       <>
         <form method="POST">
@@ -139,33 +74,5 @@ if (Astro.request.method === 'POST') {
     margin: 1.25rem 0 0;
     text-align: center;
     color: var(--espresso-soft);
-  }
-
-  #codigo {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 0.4rem 0 1rem;
-    padding: 0.7rem 0.8rem;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--cream);
-    color: var(--espresso);
-    font: inherit;
-    letter-spacing: 0.2em;
-  }
-
-  .reenviar-form {
-    text-align: center;
-    margin-top: 0.75rem;
-  }
-
-  .btn-enlace {
-    border: 0;
-    background: transparent;
-    color: var(--honey-dark);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
   }
 </style>
