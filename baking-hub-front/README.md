@@ -67,6 +67,12 @@ guardadas deben mostrar `offline.html`. Toma las capturas con la aplicación en 
 El catálogo y las fichas pueden estar desactualizados; pagos, autenticación y datos nuevos
 requieren conexión.
 
+En un sitio que ya tenía un Service Worker viejo, abre **Application → Service Workers**,
+pulsa **Unregister**, borra los datos del sitio en **Storage → Clear site data** y vuelve a
+cargar la app con internet. Espera a que el worker nuevo figure como **activated** antes de
+probar offline. El login y el registro requieren internet y no se guardan; al abrirlos sin red
+debe aparecer `offline.html`, no una pantalla vacía.
+
 Para comprobar la lista de recursos precargados del build de producción, ejecuta `npm run build`
 y verifica `dist/sw.js`; el servidor de desarrollo también guarda los recursos a medida que se
 visitan.

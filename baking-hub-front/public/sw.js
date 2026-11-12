@@ -1,7 +1,7 @@
 const CACHE_PREFIX = 'baking-hub-';
-const SHELL_CACHE = `${CACHE_PREFIX}shell-v4`;
-const PAGE_CACHE = `${CACHE_PREFIX}pages-v4`;
-const ASSET_CACHE = `${CACHE_PREFIX}assets-v4`;
+const SHELL_CACHE = `${CACHE_PREFIX}shell-v5`;
+const PAGE_CACHE = `${CACHE_PREFIX}pages-v5`;
+const ASSET_CACHE = `${CACHE_PREFIX}assets-v5`;
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   OFFLINE_URL,

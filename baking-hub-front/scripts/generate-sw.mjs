@@ -17,7 +17,7 @@ async function findBuildAssets(directory, relativeDirectory = '') {
     if (entry.isDirectory()) {
       assets.push(...(await findBuildAssets(absolutePath, relativePath)));
     } else if (/\.(?:css|js|woff2?|ttf|svg|png|jpe?g|webp|avif)$/i.test(entry.name)) {
-      assets.push(`/${relativePath}`);
+      assets.push(`/_astro/${relativePath}`);
     }
   }
 
