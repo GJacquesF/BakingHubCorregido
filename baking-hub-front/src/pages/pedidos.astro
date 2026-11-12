@@ -5,7 +5,7 @@ import PedidoCard from '../components/PedidoCard.astro';
 import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { MIS_PEDIDOS } from '../lib/queries';
-import { localizedMessage, localizedPath } from '../lib/i18n';
+import { localizedMessage, localizedPath, localizedText } from '../lib/i18n';
 import type { Pedido } from '../types';
 
 const nuevo = Astro.url.searchParams.get('nuevo');
@@ -20,12 +20,12 @@ try {
 }
 ---
 
-<Layout titulo={locale === 'en' ? 'My orders' : 'Mis pedidos'} sidebar>
-  <h2 class="section-title">{locale === 'en' ? 'My orders' : 'Mis pedidos'}</h2>
+<Layout titulo={localizedText(locale, 'Mis pedidos')} sidebar>
+  <h2 class="section-title">{localizedText(locale, 'Mis pedidos')}</h2>
 
   {nuevo && !error && (
     <p class="exito" role="status">
-      {locale === 'en' ? `Order created successfully! Your order number is #${nuevo}.` : `¡Pedido creado con éxito! Tu número de pedido es #${nuevo}.`}
+      {localizedText(locale, '¡Pedido creado con éxito! Tu número de pedido es #{id}.', { id: nuevo })}
     </p>
   )}
   {error && <Alert>{error}</Alert>}
@@ -33,8 +33,8 @@ try {
   {
     !error && pedidos.length === 0 && (
       <p class="estado-vacio">
-        {locale === 'en' ? 'You do not have any orders yet.' : 'Todavía no tienes pedidos.'}{' '}
-        <a href={localizedPath(locale, '/')}>{locale === 'en' ? 'View catalog' : 'Ver el catálogo'}</a>
+        {localizedText(locale, 'Todavía no tienes pedidos.')}{' '}
+        <a href={localizedPath(locale, '/')}>{localizedText(locale, 'Ver el catálogo')}</a>
       </p>
     )
   }

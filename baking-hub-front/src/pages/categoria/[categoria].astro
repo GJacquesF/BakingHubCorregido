@@ -5,7 +5,7 @@ import Alert from '../../components/Alert.astro';
 import { graphql, ApiError } from '../../lib/graphql';
 import { OBTENER_MENU } from '../../lib/queries';
 import { CATEGORIAS, obtenerCategoria } from '../../lib/categorias';
-import { localizedMessage, localizedPath } from '../../lib/i18n';
+import { localizedMessage, localizedPath, localizedText } from '../../lib/i18n';
 import type { Producto } from '../../types';
 
 const nombreCategoria = decodeURIComponent(Astro.params.categoria ?? '');
@@ -26,21 +26,23 @@ const filtrados = productos.filter((producto) => obtenerCategoria(producto.nombr
 ---
 
 <Layout
-  titulo={locale === 'en' ? `Desserts: ${nombreCategoria}` : `Postres ${nombreCategoria}`}
-  descripcion={locale === 'en'
-    ? `Explore Baking Hub’s ${nombreCategoria} desserts, baked with carefully selected ingredients.`
-    : `Explora postres de ${nombreCategoria} de Baking Hub, horneados con ingredientes seleccionados.`}
+  titulo={localizedText(locale, 'Postres {categoria}', { categoria: nombreCategoria })}
+  descripcion={localizedText(
+    locale,
+    'Explora postres de {categoria} de Baking Hub, horneados con ingredientes seleccionados.',
+    { categoria: nombreCategoria },
+  )}
   imagenLcp={filtrados[0]?.imagen}
   sidebar
   categoriaActiva={nombreCategoria}
 >
-  <h1 class="section-title">{locale === 'en' ? 'Desserts:' : 'Postres de'} {nombreCategoria}</h1>
-  {error && <Alert>{locale === 'en' ? 'Connection error:' : 'Error de conexión:'}{' '}{error}</Alert>}
+  <h1 class="section-title">{localizedText(locale, 'Postres de')} {nombreCategoria}</h1>
+  {error && <Alert>{localizedText(locale, 'Error de conexión:')}{' '}{error}</Alert>}
   {
     !error && (
       <div class="product-grid">
         {filtrados.length === 0 && (
-          <p class="estado-vacio">{locale === 'en' ? 'There are no products in this category.' : 'No hay productos en esta categoría.'}</p>
+          <p class="estado-vacio">{localizedText(locale, 'No hay productos en esta categoría.')}</p>
         )}
         {filtrados.map((producto, index) => <ProductCard {...producto} prioridad={index === 0} />)}
       </div>

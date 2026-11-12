@@ -1,3 +1,4 @@
+import { localizedText } from './i18n';
 import type { AstroCookies } from 'astro';
 import { guardarSesion, rutaSegura } from './auth';
 import { graphql, ApiError } from './graphql';
@@ -36,9 +37,7 @@ export async function processLogin({
     const turnstileToken = String(data.get('cf-turnstile-response') ?? '').trim();
 
     if (turnstileEnabled && !turnstileToken) {
-      error = locale === 'en'
-        ? 'Complete the security check before signing in.'
-        : 'Completa la verificación de seguridad antes de iniciar sesión.';
+      error = localizedText(locale, 'Completa la verificación de seguridad antes de iniciar sesión.');
     } else {
       try {
         const { login } = await graphql<{ login: { token: string } }>(LOGIN, {
@@ -52,9 +51,7 @@ export async function processLogin({
         const isUserError = cause instanceof ApiError && ['UNAUTHENTICATED', 'BAD_USER_INPUT'].includes(cause.codigo);
         error = isUserError
           ? cause.message
-          : locale === 'en'
-            ? 'We could not sign you in. Please try again in a moment.'
-            : 'No pudimos iniciar sesión. Inténtalo de nuevo en un momento.';
+          : localizedText(locale, 'No pudimos iniciar sesión. Inténtalo de nuevo en un momento.');
       }
     }
   }
@@ -104,11 +101,9 @@ export async function processRegistration({
     const turnstileToken = String(data.get('cf-turnstile-response') ?? '').trim();
 
     if (turnstileEnabled && !turnstileToken) {
-      error = locale === 'en'
-        ? 'Complete the security check before creating an account.'
-        : 'Completa la verificación de seguridad antes de crear la cuenta.';
+      error = localizedText(locale, 'Completa la verificación de seguridad antes de crear la cuenta.');
     } else if (password !== confirmar) {
-      error = locale === 'en' ? 'The passwords do not match.' : 'Las contraseñas no coinciden.';
+      error = localizedText(locale, 'Las contraseñas no coinciden.');
     } else {
       try {
         await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, {
@@ -118,14 +113,12 @@ export async function processRegistration({
           turnstileToken: turnstileEnabled ? turnstileToken : null,
         });
         registroExitoso = true;
-        mensaje = locale === 'en' ? 'Account created. You can now sign in.' : 'Cuenta creada. Ya puedes iniciar sesión.';
+        mensaje = localizedText(locale, 'Cuenta creada. Ya puedes iniciar sesión.');
       } catch (cause) {
         error =
           cause instanceof ApiError && cause.codigo === 'BAD_USER_INPUT'
             ? cause.message
-            : locale === 'en'
-              ? 'We could not create your account. Please try again in a moment.'
-              : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
+            : localizedText(locale, 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.');
       }
     }
   }

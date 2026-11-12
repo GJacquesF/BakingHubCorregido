@@ -4,7 +4,7 @@ import AuthCard from './AuthCard.astro';
 import FormField from './FormField.astro';
 import Alert from './Alert.astro';
 import GoogleSignIn from './GoogleSignIn';
-import { localizedPath, type AppLocale } from '../lib/i18n';
+import { localizedPath, localizedText, type AppLocale } from '../lib/i18n';
 
 interface Props {
   locale: AppLocale;
@@ -22,7 +22,7 @@ const registerPath = localizedPath(locale, '/registro');
 
 {turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
-<Layout titulo={locale === 'en' ? 'Sign in' : 'Ingresar'}>
+<Layout titulo={localizedText(locale, 'Ingresar')}>
   <AuthCard
     titulo="Ingresar"
     tituloKey="auth.loginTitle"
@@ -40,7 +40,7 @@ const registerPath = localizedPath(locale, '/registro');
       )}
       <button class="btn-primario" type="submit" data-i18n="auth.submitLogin">Ingresar</button>
     </form>
-    <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
+    <p class="separador-auth">{localizedText(locale, 'O continúa con')}</p>
     <GoogleSignIn client:load clientId={googleClientId} next={next} locale={locale} />
     <Fragment slot="pie">
       <span data-i18n="auth.noAccount">¿No tienes cuenta?</span>{' '}

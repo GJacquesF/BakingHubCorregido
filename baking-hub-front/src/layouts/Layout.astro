@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Sidebar from '../components/Sidebar.astro';
 import PresenciaUsuario from '../components/PresenciaUsuario';
+import { messages } from '../i18n/messages';
 
 interface Props {
   titulo?: string;
@@ -52,7 +53,7 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     {imagenLcp && <link rel="preload" as="image" href={imagenLcp} fetchpriority="high" />}
-    <script is:inline>
+    <script is:inline define:vars={{ translations: messages }}>
       let redirectingToEnglish = false;
       try {
         redirectingToEnglish = location.pathname === '/' && localStorage.getItem('baking-hub-locale') === 'en';
@@ -96,161 +97,6 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         });
       });
 
-      const translations = {
-        es: {
-          header: {
-            admin: 'Panel admin',
-            pedidos: 'Mis pedidos',
-            hola: 'Hola',
-            salir: 'Salir',
-            ingresar: 'Ingresar',
-            registro: 'Crear cuenta',
-            dark: 'Oscuro',
-            idioma: 'Idioma',
-            cart: 'Carrito',
-          },
-          cart: {
-            label: 'Carrito',
-            empty: 'Aún no has agregado nada delicioso.',
-            viewCatalog: 'Ver el catálogo',
-            checkout: 'Ir al checkout',
-            total: 'Total',
-            remove: 'Quitar',
-            quantity: 'Cantidad',
-          },
-          product: {
-            soldOut: 'Agotado',
-            fewLeft: '¡Solo quedan {count}!',
-            details: 'Ver detalles',
-            addToCart: 'Añadir al carrito',
-            backCatalog: '← Volver al catálogo',
-            price: 'Precio: {price}',
-            outOfStock: 'Producto agotado por ahora',
-          },
-          home: {
-            welcome: 'Bienvenido a Baking Hub',
-            heroText: 'Los mejores postres horneados, directo del horno a tu mesa.',
-            whyUs: '¿Por qué elegirnos?',
-            whyText: 'En Baking Hub garantizamos ingredientes 100% orgánicos y entregas el mismo día para que disfrutes de la frescura en cada bocado.',
-            catalog: 'Catálogo',
-            emptyCategory: 'No hay productos en esta categoría.',
-          },
-          auth: {
-            loginTitle: 'Ingresar',
-            loginSubtitle: 'Entra para confirmar tus pedidos y revisar tu historial.',
-            email: 'Correo',
-            password: 'Contraseña',
-            noAccount: '¿No tienes cuenta?',
-            createAccount: 'Crear cuenta',
-            human: 'Confirmo que soy humano',
-            submitLogin: 'Ingresar',
-            registerTitle: 'Crear cuenta',
-            registerSubtitle: 'Con tu cuenta puedes pagar y ver tus pedidos anteriores.',
-            name: 'Nombre',
-            repeatPassword: 'Repite la contraseña',
-            alreadyAccount: '¿Ya tienes cuenta?',
-            submitRegister: 'Crear cuenta',
-            continue: 'Ir a iniciar sesión',
-          },
-          admin: {
-            title: 'Panel admin',
-            summary: 'Resumen',
-            resumenTienda: 'Resumen de la tienda',
-            saludo: 'Hola',
-            ventas: 'Ventas cobradas',
-            pagados: 'Pedidos pagados',
-            pendientes: 'Pedidos pendientes de pago',
-            catalogo: 'Productos en catálogo',
-            agotados: 'Productos agotados',
-            bajoStock: 'Con stock bajo (5 o menos)',
-            clientes: 'Clientes registrados',
-            suspendidos: 'Cuentas suspendidas',
-            accesos: 'Accesos rápidos',
-            agregarInventario: 'Agregar inventario',
-            gestionarClientes: 'Gestionar clientes',
-            buscar: 'Buscar',
-            limpiar: 'Limpiar',
-          },
-          footer: 'Baking Hub © 2026. Proyecto Universitario - Práctica 6-2.',
-        },
-        en: {
-          header: {
-            admin: 'Admin panel',
-            pedidos: 'My orders',
-            hola: 'Hi',
-            salir: 'Log out',
-            ingresar: 'Sign in',
-            registro: 'Create account',
-            dark: 'Dark',
-            idioma: 'Language',
-            cart: 'Cart',
-          },
-          cart: {
-            label: 'Cart',
-            empty: 'You have not added anything delicious yet.',
-            viewCatalog: 'View catalog',
-            checkout: 'Go to checkout',
-            total: 'Total',
-            remove: 'Remove',
-            quantity: 'Quantity',
-          },
-          product: {
-            soldOut: 'Sold out',
-            fewLeft: 'Only {count} left!',
-            details: 'View details',
-            addToCart: 'Add to cart',
-            backCatalog: '← Back to catalog',
-            price: 'Price: {price}',
-            outOfStock: 'Product sold out for now',
-          },
-          home: {
-            welcome: 'Welcome to Baking Hub',
-            heroText: 'The best baked desserts, straight from the oven to your table.',
-            whyUs: 'Why choose us?',
-            whyText: 'At Baking Hub we guarantee 100% organic ingredients and same-day delivery so you can enjoy freshness in every bite.',
-            catalog: 'Catalog',
-            emptyCategory: 'There are no products in this category yet.',
-          },
-          auth: {
-            loginTitle: 'Sign in',
-            loginSubtitle: 'Log in to confirm your orders and review your history.',
-            email: 'Email',
-            password: 'Password',
-            noAccount: 'Do not have an account?',
-            createAccount: 'Create account',
-            human: 'I confirm I am human',
-            submitLogin: 'Sign in',
-            registerTitle: 'Create account',
-            registerSubtitle: 'With your account you can pay and review your previous orders.',
-            name: 'Name',
-            repeatPassword: 'Repeat password',
-            alreadyAccount: 'Already have an account?',
-            submitRegister: 'Create account',
-            continue: 'Go to sign in',
-          },
-          admin: {
-            title: 'Admin panel',
-            summary: 'Summary',
-            resumenTienda: 'Store summary',
-            saludo: 'Hi',
-            ventas: 'Collected sales',
-            pagados: 'Paid orders',
-            pendientes: 'Outstanding payments',
-            catalogo: 'Products in catalog',
-            agotados: 'Out of stock products',
-            bajoStock: 'Low stock (5 or less)',
-            clientes: 'Registered customers',
-            suspendidos: 'Suspended accounts',
-            accesos: 'Quick access',
-            agregarInventario: 'Add inventory',
-            gestionarClientes: 'Manage customers',
-            buscar: 'Search',
-            limpiar: 'Clear',
-          },
-          footer: 'Baking Hub © 2026. University project — Practice 6-2.',
-        },
-      };
-
       const applyTranslation = (element) => {
         if (!(element instanceof HTMLElement)) return;
         const key = element.dataset.i18n;
@@ -290,9 +136,7 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         const offlineStatus = document.getElementById('offline-status');
         if (!offlineStatus) return;
         offlineStatus.hidden = navigator.onLine;
-        offlineStatus.textContent = document.documentElement.dataset.locale === 'en'
-          ? 'You are offline. Previously visited catalog and product pages may show saved content.'
-          : 'Estás sin conexión. El catálogo y los productos que ya visitaste pueden mostrar contenido guardado.';
+        offlineStatus.textContent = translations[locale].offlineStatus;
       };
       window.addEventListener('online', updateOfflineStatus);
       window.addEventListener('offline', updateOfflineStatus);

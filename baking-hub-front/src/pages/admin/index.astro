@@ -5,7 +5,7 @@ import Alert from '../../components/Alert.astro';
 import AdminLiveUpdates from '../../components/AdminLiveUpdates';
 import { graphql, ApiError } from '../../lib/graphql';
 import { ADMIN_RESUMEN } from '../../lib/queries';
-import { localizedMessage, localizedPath } from '../../lib/i18n';
+import { localizedMessage, localizedPath, localizedText } from '../../lib/i18n';
 import { precio } from '../../lib/format';
 import type { ResumenAdmin } from '../../types';
 
@@ -19,11 +19,11 @@ try {
 }
 ---
 
-<AdminLayout titulo={locale === 'en' ? 'Summary' : 'Resumen'} seccion="resumen">
-  <h2 class="admin-titulo">{locale === 'en' ? 'Store summary' : 'Resumen de la tienda'}</h2>
+<AdminLayout titulo={localizedText(locale, 'Resumen')} seccion="resumen">
+  <h2 class="admin-titulo">{localizedText(locale, 'Resumen de la tienda')}</h2>
   <p class="admin-subtitulo">
-    {locale === 'en' ? 'Hi' : 'Hola'}, {Astro.locals.usuario?.nombre}.{' '}
-    {locale === 'en' ? 'Here are today’s highlights.' : 'Esto es lo más importante de hoy.'}
+    {localizedText(locale, 'Hola')}, {Astro.locals.usuario?.nombre}.{' '}
+    {localizedText(locale, 'Esto es lo más importante de hoy.')}
   </p>
   <AdminLiveUpdates client:load />
 
@@ -35,43 +35,43 @@ try {
         <div class="stats">
           <div class="stat">
             <span class="stat-valor">{precio(resumen.ventas)}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Collected sales' : 'Ventas cobradas'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Ventas cobradas')}</span>
           </div>
           <div class="stat">
             <span class="stat-valor">{resumen.pedidosPagados}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Paid orders' : 'Pedidos pagados'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Pedidos pagados')}</span>
           </div>
           <div class="stat">
             <span class="stat-valor">{resumen.pedidosPendientes}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Orders awaiting payment' : 'Pedidos pendientes de pago'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Pedidos pendientes de pago')}</span>
           </div>
           <a class="stat" href={localizedPath(locale, '/admin/inventario')}>
             <span class="stat-valor">{resumen.productos}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Products in catalog' : 'Productos en catálogo'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Productos en catálogo')}</span>
           </a>
           <a class:list={['stat', { alerta: resumen.sinStock > 0 }]} href={localizedPath(locale, '/admin/inventario')}>
             <span class="stat-valor">{resumen.sinStock}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Out of stock' : 'Productos agotados'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Productos agotados')}</span>
           </a>
           <a class="stat" href={localizedPath(locale, '/admin/inventario')}>
             <span class="stat-valor">{resumen.stockBajo}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Low stock (5 or fewer)' : 'Con stock bajo (5 o menos)'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Con stock bajo (5 o menos)')}</span>
           </a>
           <a class="stat" href={localizedPath(locale, '/admin/usuarios')}>
             <span class="stat-valor">{resumen.clientes}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Registered customers' : 'Clientes registrados'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Clientes registrados')}</span>
           </a>
           <a class="stat" href={localizedPath(locale, '/admin/usuarios')}>
             <span class="stat-valor">{resumen.clientesSuspendidos}</span>
-            <span class="stat-texto">{locale === 'en' ? 'Suspended accounts' : 'Cuentas suspendidas'}</span>
+            <span class="stat-texto">{localizedText(locale, 'Cuentas suspendidas')}</span>
           </a>
         </div>
 
         <div class="admin-bloque">
-          <h3>{locale === 'en' ? 'Quick access' : 'Accesos rápidos'}</h3>
+          <h3>{localizedText(locale, 'Accesos rápidos')}</h3>
           <p style="display:flex;gap:0.6rem;flex-wrap:wrap;margin:0">
-            <a class="btn-admin" href={localizedPath(locale, '/admin/inventario')}>{locale === 'en' ? 'Add inventory' : 'Agregar inventario'}</a>
-            <a class="btn-admin sec" href={localizedPath(locale, '/admin/usuarios')}>{locale === 'en' ? 'Manage customers' : 'Gestionar clientes'}</a>
+            <a class="btn-admin" href={localizedPath(locale, '/admin/inventario')}>{localizedText(locale, 'Agregar inventario')}</a>
+            <a class="btn-admin sec" href={localizedPath(locale, '/admin/usuarios')}>{localizedText(locale, 'Gestionar clientes')}</a>
           </p>
         </div>
       </>

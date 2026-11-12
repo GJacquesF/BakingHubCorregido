@@ -2,37 +2,12 @@
 import CartButton from './CartButton.astro';
 import InstallPWAButton from './InstallPWAButton';
 import { localizedPath } from '../lib/i18n';
+import { messages } from '../i18n/messages';
 
 const { usuario } = Astro.locals;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const primerNombre = usuario?.nombre.split(' ')[0];
-const strings = {
-  es: {
-    nav: 'Cuenta y carrito',
-    admin: 'Panel admin',
-    pedidos: 'Mis pedidos',
-    hola: 'Hola',
-    salir: 'Salir',
-    ingresar: 'Ingresar',
-    registro: 'Crear cuenta',
-    idioma: 'Idioma',
-    theme: 'Modo oscuro',
-    dark: 'Oscuro',
-  },
-  en: {
-    nav: 'Account and cart',
-    admin: 'Admin panel',
-    pedidos: 'My orders',
-    hola: 'Hi',
-    salir: 'Log out',
-    ingresar: 'Sign in',
-    registro: 'Create account',
-    idioma: 'Language',
-    theme: 'Dark mode',
-    dark: 'Dark',
-  },
-};
-const t = strings[locale];
+const t = messages[locale].header;
 ---
 
 <header class="top-bar">

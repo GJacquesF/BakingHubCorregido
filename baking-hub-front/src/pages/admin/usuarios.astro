@@ -7,25 +7,14 @@ import { graphql } from '../../lib/graphql';
 import { ACTUALIZAR_USUARIO, ADMIN_USUARIOS, CAMBIAR_ESTADO_USUARIO, ELIMINAR_USUARIO } from '../../lib/queries';
 import { ErrorFormulario, mensajeError, texto } from '../../lib/admin';
 import { precio } from '../../lib/format';
-import { localizedPath } from '../../lib/i18n';
+import { localizedPath, localizedText } from '../../lib/i18n';
+import { messages } from '../../i18n/messages';
 import type { UsuarioAdmin } from '../../types';
 
 const token = Astro.locals.token;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const AVISOS: Record<string, string> = {
-  actualizado: 'Datos del cliente actualizados.',
-  suspendido: 'Cuenta suspendida: el cliente ya no puede entrar ni comprar.',
-  reactivado: 'Cuenta reactivada.',
-  eliminado: 'Cliente eliminado. Sus pedidos se conservan en el historial.',
-};
-const AVISOS_EN: Record<string, string> = {
-  actualizado: 'Customer details updated.',
-  suspendido: 'Account suspended: this customer can no longer sign in or shop.',
-  reactivado: 'Account reactivated.',
-  eliminado: 'Customer removed. Their orders remain in the history.',
-};
 const avisoKey = Astro.url.searchParams.get('ok') ?? '';
-const aviso = locale === 'en' ? AVISOS_EN[avisoKey] ?? null : AVISOS[avisoKey] ?? null;
+const aviso = messages[locale].adminNotices.users[avisoKey as keyof typeof messages.es.adminNotices.users] ?? null;
 const busqueda = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 100);
 const volver = (ok: string) => `${localizedPath(locale, '/admin/usuarios')}?ok=${ok}${busqueda ? `&q=${encodeURIComponent(busqueda)}` : ''}`;
 
@@ -65,10 +54,10 @@ try {
 const fecha = (iso: string) => new Date(iso).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-MX', { dateStyle: 'medium' });
 ---
 
-<AdminLayout titulo={locale === 'en' ? 'Customers' : 'Clientes'} seccion="usuarios">
-  <h2 class="admin-titulo">{locale === 'en' ? 'Customers' : 'Clientes'}</h2>
+<AdminLayout titulo={localizedText(locale, 'Clientes')} seccion="usuarios">
+  <h2 class="admin-titulo">{localizedText(locale, 'Clientes')}</h2>
   <p class="admin-subtitulo">
-    {locale === 'en' ? 'Review customer accounts, update their details, or suspend access.' : 'Consulta las cuentas de clientes, corrige sus datos o suspende el acceso.'}
+    {localizedText(locale, 'Consulta las cuentas de clientes, corrige sus datos o suspende el acceso.')}
   </p>
   <AdminPresenceUpdates client:load />
 
@@ -80,19 +69,19 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString(locale === 'en' 
       type="search"
       name="q"
       value={busqueda}
-      placeholder={locale === 'en' ? 'Search by name or email…' : 'Buscar por nombre o correo…'}
-      aria-label={locale === 'en' ? 'Search customers' : 'Buscar cliente'}
+      placeholder={localizedText(locale, 'Buscar por nombre o correo…')}
+      aria-label={localizedText(locale, 'Buscar cliente')}
     />
-    <button class="btn-admin" type="submit">{locale === 'en' ? 'Search' : 'Buscar'}</button>
-    {busqueda && <a class="btn-admin sec" href={localizedPath(locale, '/admin/usuarios')}>{locale === 'en' ? 'Clear' : 'Limpiar'}</a>}
+    <button class="btn-admin" type="submit">{localizedText(locale, 'Buscar')}</button>
+    {busqueda && <a class="btn-admin sec" href={localizedPath(locale, '/admin/usuarios')}>{localizedText(locale, 'Limpiar')}</a>}
   </form>
 
   {
     usuarios.length === 0 && !error && (
       <p class="estado-vacio">
         {busqueda
-          ? locale === 'en' ? 'No customers match your search.' : 'Ningún cliente coincide con tu búsqueda.'
-          : locale === 'en' ? 'No customers have registered yet.' : 'Todavía no hay clientes registrados.'}
+          ? localizedText(locale, 'Ningún cliente coincide con tu búsqueda.')
+          : localizedText(locale, 'Todavía no hay clientes registrados.')}
       </p>
     )
   }
@@ -103,13 +92,13 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString(locale === 'en' 
         <table class="tabla-admin">
           <thead>
             <tr>
-              <th>{locale === 'en' ? 'Customer' : 'Cliente'}</th>
-              <th>{locale === 'en' ? 'Registered' : 'Registro'}</th>
-              <th class="num">{locale === 'en' ? 'Orders' : 'Pedidos'}</th>
-              <th class="num">{locale === 'en' ? 'Total spent' : 'Total pagado'}</th>
-              <th>{locale === 'en' ? 'Status' : 'Estado'}</th>
-              <th>{locale === 'en' ? 'Online' : 'Online'}</th>
-              <th>{locale === 'en' ? 'Actions' : 'Acciones'}</th>
+              <th>{localizedText(locale, 'Cliente')}</th>
+              <th>{localizedText(locale, 'Registro')}</th>
+              <th class="num">{localizedText(locale, 'Pedidos')}</th>
+              <th class="num">{localizedText(locale, 'Total pagado')}</th>
+              <th>{localizedText(locale, 'Estado')}</th>
+              <th>{localizedText(locale, 'Online')}</th>
+              <th>{localizedText(locale, 'Acciones')}</th>
             </tr>
           </thead>
           <tbody>
@@ -125,12 +114,12 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString(locale === 'en' 
                 <td class="num">{precio(u.totalComprado)}</td>
                 <td>
                   <span class={`badge ${u.activo ? 'badge-ok' : 'badge-error'}`}>
-                    {u.activo ? locale === 'en' ? 'Active' : 'Activo' : locale === 'en' ? 'Suspended' : 'Suspendido'}
+                    {u.activo ? localizedText(locale, 'Activo') : localizedText(locale, 'Suspendido')}
                   </span>
                 </td>
                 <td>
                   <span class:list={['presencia-usuario', u.online ? 'en-linea' : 'fuera-linea']}>
-                    {u.online ? locale === 'en' ? 'Online' : 'En línea' : locale === 'en' ? 'Offline' : 'Desconectado'}
+                    {u.online ? localizedText(locale, 'En línea') : localizedText(locale, 'Desconectado')}
                   </span>
                 </td>
                 <td>
@@ -139,45 +128,41 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString(locale === 'en' 
                       <form
                         method="POST"
                         data-confirmar={u.activo
-                          ? locale === 'en'
-                            ? `Suspend ${u.nombre}'s account? They will not be able to sign in or shop.`
-                            : `¿Suspender la cuenta de ${u.nombre}? No podrá entrar ni comprar.`
+                          ? localizedText(locale, '¿Suspender la cuenta de {nombre}? No podrá entrar ni comprar.', { nombre: u.nombre })
                           : undefined}
                       >
                         <input type="hidden" name="accion" value={u.activo ? 'suspender' : 'reactivar'} />
                         <input type="hidden" name="id" value={u.id} />
                         <button class="btn-admin sec" type="submit">
-                          {u.activo ? locale === 'en' ? 'Suspend' : 'Suspender' : locale === 'en' ? 'Reactivate' : 'Reactivar'}
+                          {u.activo ? localizedText(locale, 'Suspender') : localizedText(locale, 'Reactivar')}
                         </button>
                       </form>
                       <form
                         method="POST"
-                        data-confirmar={locale === 'en'
-                          ? `Remove ${u.nombre}? This action cannot be undone.`
-                          : `¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`}
+                        data-confirmar={localizedText(locale, '¿Eliminar a {nombre}? Esta acción no se puede deshacer.', { nombre: u.nombre })}
                       >
                         <input type="hidden" name="accion" value="eliminar" />
                         <input type="hidden" name="id" value={u.id} />
                         <button class="btn-admin peligro" type="submit">
-                          {locale === 'en' ? 'Remove' : 'Eliminar'}
+                          {localizedText(locale, 'Eliminar')}
                         </button>
                       </form>
                     </div>
                     <details>
-                      <summary>{locale === 'en' ? 'Edit details' : 'Editar datos'}</summary>
+                      <summary>{localizedText(locale, 'Editar datos')}</summary>
                       <form method="POST">
                         <input type="hidden" name="accion" value="actualizar" />
                         <input type="hidden" name="id" value={u.id} />
                         <div class="campo-admin">
-                          <label for={`u-nombre-${u.id}`}>{locale === 'en' ? 'Name' : 'Nombre'}</label>
+                          <label for={`u-nombre-${u.id}`}>{localizedText(locale, 'Nombre')}</label>
                           <input id={`u-nombre-${u.id}`} name="nombre" value={u.nombre} minlength="2" maxlength="100" required />
                         </div>
                         <div class="campo-admin">
-                          <label for={`u-email-${u.id}`}>{locale === 'en' ? 'Email' : 'Correo'}</label>
+                          <label for={`u-email-${u.id}`}>{localizedText(locale, 'Correo')}</label>
                           <input id={`u-email-${u.id}`} name="email" type="email" value={u.email} maxlength="254" required />
                         </div>
                         <button class="btn-admin" type="submit">
-                          {locale === 'en' ? 'Save' : 'Guardar'}
+                          {localizedText(locale, 'Guardar')}
                         </button>
                       </form>
                     </details>

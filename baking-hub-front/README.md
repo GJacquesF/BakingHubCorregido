@@ -79,6 +79,11 @@ visitan.
 
 Astro i18n usa español por defecto en `/` e inglés en `/en/`. Cambia el idioma desde el selector
 del encabezado; el sitio conserva la ruta de la página cuando existe en ambos idiomas.
+Las rutas bajo `src/pages/en/` son entradas de Astro que reutilizan las páginas compartidas; no
+duplican su contenido. Los textos traducibles se mantienen en `src/i18n/messages.ts` y se
+resuelven con `localizedText` desde `src/lib/i18n.ts`. Para agregar una frase nueva, añade su
+versión en español e inglés al catálogo y usa `localizedText(locale, 'Texto en español')` en la
+interfaz. Las traducciones con variables admiten marcadores como `{count}` y un objeto de valores.
 
 Para el almacenamiento de imágenes en Netlify, configura `PUBLIC_SUPABASE_URL`,
 `PUBLIC_SUPABASE_ANON_KEY` y `PUBLIC_SUPABASE_BUCKET` para los contextos de build. La URL y la

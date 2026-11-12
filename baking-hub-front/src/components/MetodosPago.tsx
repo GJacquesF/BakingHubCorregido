@@ -1,3 +1,4 @@
+import { localizedText } from '../i18n/messages';
 import { metodoPago } from '../lib/pagos';
 import type { MetodoPago } from '../types';
 
@@ -13,7 +14,7 @@ interface Props {
 export default function MetodosPago({ metodos, seleccionado, locale, deshabilitado, onChange }: Props) {
   return (
     <fieldset className="metodos-pago" disabled={deshabilitado}>
-      <legend className="metodos-leyenda">{locale === 'en' ? 'Choose how you want to pay' : 'Elige cómo quieres pagar'}</legend>
+      <legend className="metodos-leyenda">{localizedText(locale, 'Elige cómo quieres pagar')}</legend>
       {metodos.map((metodo) => {
         const info = metodoPago(metodo, locale);
         return (

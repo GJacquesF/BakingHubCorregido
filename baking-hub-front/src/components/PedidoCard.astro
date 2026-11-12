@@ -1,7 +1,7 @@
 ---
 import { precio } from '../lib/format';
 import { estadoPedido, formatearFecha, metodoPago } from '../lib/pagos';
-import { localizedPath } from '../lib/i18n';
+import { localizedPath, localizedText } from '../lib/i18n';
 import type { Pedido } from '../types';
 
 interface Props {
@@ -20,7 +20,7 @@ const detalles = localizedPath(locale, `/pedidos/${pedido.id}`);
 
 <article class:list={['pedido', { destacado }]}>
   <header>
-    <h3><a href={detalles}>{locale === 'en' ? `Order #${pedido.id}` : `Pedido #${pedido.id}`}</a></h3>
+    <h3><a href={detalles}>{localizedText(locale, 'Pedido #{id}', { id: pedido.id })}</a></h3>
     <span class={`badge badge-${estado.clase}`}>{estado.etiqueta}</span>
   </header>
   <p class="fecha">{fecha}{metodo && ` · ${metodo.etiqueta}`}</p>
@@ -38,8 +38,8 @@ const detalles = localizedPath(locale, `/pedidos/${pedido.id}`);
   <p class="acciones">
     <a href={detalles}>
       {porPagar
-        ? locale === 'en' ? 'View payment instructions →' : 'Ver instrucciones de pago →'
-        : locale === 'en' ? 'View details →' : 'Ver detalle →'}
+        ? localizedText(locale, 'Ver instrucciones de pago →')
+        : localizedText(locale, 'Ver detalle →')}
     </a>
   </p>
 </article>

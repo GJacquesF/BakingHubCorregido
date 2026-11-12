@@ -1,6 +1,7 @@
 ---
 import Layout from './Layout.astro';
 import AdminNav from '../components/AdminNav.astro';
+import { localizedText } from '../lib/i18n';
 import '../styles/admin.css';
 
 interface Props {
@@ -10,16 +11,16 @@ interface Props {
 
 const { titulo, seccion } = Astro.props;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const titulosEn: Record<Props['seccion'], string> = {
-  resumen: 'Summary',
-  pedidos: 'Orders',
-  inventario: 'Inventory',
-  entregas: 'Deliveries',
-  usuarios: 'Customers',
+const titulosEs: Record<Props['seccion'], string> = {
+  resumen: 'Resumen',
+  pedidos: 'Pedidos',
+  inventario: 'Inventario',
+  entregas: 'Entregas',
+  usuarios: 'Clientes',
 };
 ---
 
-<Layout titulo={`Admin · ${locale === 'en' ? titulosEn[seccion] : titulo}`}>
+<Layout titulo={locale === 'en' ? `Admin · ${localizedText(locale, titulosEs[seccion])}` : titulo}>
   <AdminNav activa={seccion} />
   <slot />
 </Layout>

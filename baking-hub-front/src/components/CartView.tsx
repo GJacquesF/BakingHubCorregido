@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { precio } from "../lib/format";
 import { cambiarCantidad, carrito, quitar, tope, totalPrecio } from "../stores/carrito";
+import { messages } from "../i18n/messages";
 import "../styles/carrito.css";
 
 export default function CartView() {
@@ -8,29 +9,7 @@ export default function CartView() {
     const total = useStore(totalPrecio);
     const locale = document.documentElement.dataset.locale === "en" ? "en" : "es";
     const localePath = (path: string) => `${locale === "en" ? "/en" : ""}${path === "/" ? "" : path}`;
-    const strings = {
-        es: {
-            empty: "Aún no has agregado nada delicioso.",
-            viewCatalog: "Ver el catálogo",
-            removeOne: "Quitar una unidad de",
-            addOne: "Agregar una unidad de",
-            reachedLimit: "Alcanzaste el máximo disponible",
-            remove: "Quitar",
-            total: "Total",
-            checkout: "Ir al checkout",
-        },
-        en: {
-            empty: "You have not added anything delicious yet.",
-            viewCatalog: "View catalog",
-            removeOne: "Remove one unit of",
-            addOne: "Add one unit of",
-            reachedLimit: "You reached the maximum available",
-            remove: "Remove",
-            total: "Total",
-            checkout: "Go to checkout",
-        },
-    } as const;
-    const t = strings[locale];
+    const t = messages[locale].cart;
 
     if (items.length === 0) {
         return (
@@ -53,7 +32,7 @@ export default function CartView() {
                             >
                                 −
                             </button>
-                            <span aria-label={`${locale === "en" ? "Quantity" : "Cantidad"}: ${item.cantidad}`}>
+                            <span aria-label={`${t.quantity}: ${item.cantidad}`}>
                                 {item.cantidad}
                             </span>
                             <button

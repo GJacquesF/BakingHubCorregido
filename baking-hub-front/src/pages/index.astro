@@ -7,7 +7,7 @@ import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { OBTENER_MENU } from '../lib/queries';
 import { CATEGORIAS } from '../lib/categorias';
-import { localizedMessage, localizedPath } from '../lib/i18n';
+import { localizedMessage, localizedPath, localizedText } from '../lib/i18n';
 import type { Producto } from '../types';
 
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
@@ -29,10 +29,8 @@ const filtrados = productos;
 ---
 
 <Layout
-  titulo={locale === 'en' ? 'Artisan desserts' : 'Postres artesanales'}
-  descripcion={locale === 'en'
-    ? 'Explore Baking Hub’s full catalog of artisan desserts, baked with carefully selected ingredients.'
-    : 'Explora el catálogo completo de postres artesanales de Baking Hub, horneados con ingredientes seleccionados.'}
+  titulo={localizedText(locale, 'Postres artesanales')}
+  descripcion={localizedText(locale, 'Explora el catálogo completo de postres artesanales de Baking Hub, horneados con ingredientes seleccionados.')}
   imagenLcp={productos[0]?.imagen}
   sidebar
   categoriaActiva={categoria}
@@ -40,11 +38,11 @@ const filtrados = productos;
   {categoria === 'Todas' && <Hero />}
 
   {categoria === 'Todas'
-    ? <h2 class="section-title">{locale === 'en' ? 'Catalog' : 'Catálogo'}</h2>
-    : <h1 class="section-title">{locale === 'en' ? 'Catalog' : 'Catálogo'}: {categoria}</h1>}
+    ? <h2 class="section-title">{localizedText(locale, 'Catálogo')}</h2>
+    : <h1 class="section-title">{localizedText(locale, 'Catálogo')}: {categoria}</h1>}
 
   {error && (
-    <Alert>{locale === 'en' ? 'Connection error:' : 'Error de conexión:'}{' '}{error}</Alert>
+    <Alert>{localizedText(locale, 'Error de conexión:')}{' '}{error}</Alert>
   )}
 
   {

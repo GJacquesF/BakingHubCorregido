@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { carrito, totalArticulos, totalPrecio, vaciar } from '../stores/carrito';
 import { precio } from '../lib/format';
+import { messages } from '../i18n/messages';
 import { metodoPago } from '../lib/pagos';
 import { tokenizarTarjeta, type DatosTarjeta } from '../lib/mercadopago-cliente';
 import type { ErroresTarjeta } from '../lib/tarjeta';
@@ -27,75 +28,7 @@ export default function CheckoutView({ config, puntos, usuario, locale }: Props)
   const articulos = useStore(totalArticulos);
   const total = useStore(totalPrecio);
   const localizedPath = (path: string) => `${locale === 'en' ? '/en' : ''}${path === '/' ? '' : path}`;
-  const t = locale === 'en'
-    ? {
-        empty: 'Your cart is empty.',
-        catalog: 'View catalog',
-        deliveryRequired: 'Choose a delivery location on the map.',
-        cardholderRequired: 'Enter the name as it appears on the card.',
-        paymentError: 'There was an error processing the payment. Please try again.',
-        processing: 'Processing…',
-        oxxo: 'Generate payment slip',
-        spei: 'Generate transfer details',
-        continueMercadoPago: 'Continue to Mercado Pago',
-        pay: 'Pay',
-        paymentMethod: 'Payment method',
-        testMode: 'Test mode.',
-        noRealCharge: 'No real charge will be made.',
-        cardInstructions: 'When you continue, we will generate a payment slip with a reference.',
-        oxxoStep1: 'Take it to any OXXO store (you can show it on your phone).',
-        oxxoStep2: 'Pay the exact amount at the checkout.',
-        paymentConfirmed: 'Your order will be confirmed once the payment is credited.',
-        expiresOxxo: 'You have',
-        expiresOxxoEnd: 'hours to pay. After that, the order is canceled and the items return to inventory.',
-        speiInstructions: 'When you continue, we will show you an interbank CLABE and the exact amount.',
-        speiStep1: 'Open your bank app or online banking.',
-        speiStep2: 'Make a SPEI transfer to that CLABE for the indicated amount.',
-        expiresSpei: 'hours to make the transfer.',
-        mercadoPago: 'We will take you to Mercado Pago to complete payment securely with your account, then bring you back here.',
-        payer: 'Paying as',
-        cancel: 'Cancel and go back',
-        security: 'Mercado Pago processes your payment. Baking Hub does not store your card details.',
-        orderSummary: 'Order summary',
-        yourOrder: 'Your order',
-        articles: 'Items',
-        total: 'Total due',
-        delivery: 'Delivery to',
-      }
-    : {
-        empty: 'Tu carrito está vacío.',
-        catalog: 'Ver el catálogo',
-        deliveryRequired: 'Elige en el mapa dónde quieres recibir tu pedido.',
-        cardholderRequired: 'Escribe el nombre como aparece en la tarjeta.',
-        paymentError: 'Hubo un error al procesar el pago. Inténtalo de nuevo.',
-        processing: 'Procesando…',
-        oxxo: 'Generar ficha de pago',
-        spei: 'Generar datos de transferencia',
-        continueMercadoPago: 'Continuar a Mercado Pago',
-        pay: 'Pagar',
-        paymentMethod: 'Método de pago',
-        testMode: 'Modo de pruebas.',
-        noRealCharge: 'No se hará ningún cobro real.',
-        cardInstructions: 'Al continuar generaremos una ficha con una referencia de pago.',
-        oxxoStep1: 'Llévala a cualquier tienda OXXO (puedes mostrarla desde tu celular).',
-        oxxoStep2: 'Paga el monto exacto en caja.',
-        paymentConfirmed: 'Tu pedido se confirma en cuanto se acredite el pago.',
-        expiresOxxo: 'Tienes',
-        expiresOxxoEnd: 'horas para pagar; después el pedido se cancela y las piezas vuelven al inventario.',
-        speiInstructions: 'Al continuar te mostraremos una CLABE interbancaria y el monto exacto.',
-        speiStep1: 'Abre la app o la banca en línea de tu banco.',
-        speiStep2: 'Haz una transferencia SPEI a esa CLABE por el monto indicado.',
-        expiresSpei: 'horas para transferir.',
-        mercadoPago: 'Te llevaremos a Mercado Pago para que completes el pago de forma segura con tu cuenta, y regresarás aquí al terminar.',
-        payer: 'Pagas como',
-        cancel: 'Cancelar y regresar',
-        security: 'Mercado Pago procesa el pago. Baking Hub no almacena los datos de tu tarjeta.',
-        orderSummary: 'Resumen de tu orden',
-        yourOrder: 'Tu orden',
-        articles: 'Artículos',
-        total: 'Total a pagar',
-        delivery: 'Entrega en',
-      };
+  const t = messages[locale].checkout;
 
   const [metodo, setMetodo] = useState<MetodoPago>(config.metodos[0] ?? 'tarjeta');
   const [tarjeta, setTarjeta] = useState<DatosTarjeta>(TARJETA_VACIA);
@@ -215,7 +148,7 @@ export default function CheckoutView({ config, puntos, usuario, locale }: Props)
                 <li>{t.paymentConfirmed}</li>
               </ol>
               <p className="nota">
-                {t.expiresOxxo} <strong>{config.horasParaPagar} {locale === 'en' ? 'hours' : 'horas'}</strong> {t.expiresOxxoEnd}
+                {t.expiresOxxo} <strong>{config.horasParaPagar} {t.hours}</strong> {t.expiresOxxoEnd}
               </p>
             </div>
           )}
@@ -228,7 +161,7 @@ export default function CheckoutView({ config, puntos, usuario, locale }: Props)
                 <li>{t.speiStep2}</li>
                 <li>{t.paymentConfirmed}</li>
               </ol>
-              <p className="nota">{t.expiresOxxo} <strong>{config.horasParaPagar} {locale === 'en' ? 'hours' : 'horas'}</strong> {t.expiresSpei}</p>
+              <p className="nota">{t.expiresOxxo} <strong>{config.horasParaPagar} {t.hours}</strong> {t.expiresSpei}</p>
             </div>
           )}
 
@@ -273,7 +206,7 @@ export default function CheckoutView({ config, puntos, usuario, locale }: Props)
           <span>{articulos}</span>
         </p>
         <p className="resumen-total">
-          <span>{t.total}</span>
+          <span>{t.totalDue}</span>
           <strong>{precio(total)}</strong>
         </p>
         {puntoSeleccionado && (

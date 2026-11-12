@@ -1,5 +1,6 @@
 ---
 import { precio } from '../lib/format';
+import { messages } from '../i18n/messages';
 import { formatearFecha, formatearReferencia } from '../lib/pagos';
 import type { Pedido } from '../types';
 
@@ -12,51 +13,7 @@ const esOxxo = pedido.metodoPago === 'oxxo';
 const esSpei = pedido.metodoPago === 'spei';
 const esBilletera = pedido.metodoPago === 'mercadopago';
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const texto = locale === 'en'
-  ? {
-      oxxo: 'Pay at any OXXO',
-      spei: 'Pay by SPEI transfer',
-      paymentReference: 'Payment reference',
-      clabe: 'Interbank CLABE',
-      pending: 'Pending generation',
-      exactAmount: 'Exact amount due',
-      payBefore: 'Pay before',
-      copy: 'Copy',
-      reference: 'reference',
-      oxxoStep1: 'Visit any OXXO store and tell the cashier you want to pay a service through Mercado Pago.',
-      oxxoStep2: 'Provide the reference and pay the exact amount in cash.',
-      oxxoStep3: 'Keep your receipt. This page will show “Paid” once your payment is credited.',
-      speiStep1: 'Open your bank app or online banking and choose to make a SPEI transfer.',
-      speiStep2: 'Enter the CLABE and transfer the exact amount.',
-      speiStep3: 'This page will show “Paid” once your transfer is credited.',
-      viewSlip: 'View / print payment slip on Mercado Pago ↗',
-      payment: 'Mercado Pago payment',
-      complete: 'Complete your payment on Mercado Pago',
-      reserved: 'Your order is reserved. Finish paying from your Mercado Pago account.',
-      goTo: 'Go to Mercado Pago',
-    }
-  : {
-      oxxo: 'Paga en cualquier OXXO',
-      spei: 'Paga con transferencia SPEI',
-      paymentReference: 'Referencia de pago',
-      clabe: 'CLABE interbancaria',
-      pending: 'Pendiente de generar',
-      exactAmount: 'Monto exacto a pagar',
-      payBefore: 'Págalo antes del',
-      copy: 'Copiar',
-      reference: 'referencia',
-      oxxoStep1: 'Acude a cualquier tienda OXXO y dile al cajero que quieres hacer un pago de servicio con Mercado Pago.',
-      oxxoStep2: 'Indica la referencia y paga el monto exacto en efectivo.',
-      oxxoStep3: 'Conserva tu comprobante. Esta página mostrará “Pagado” en cuanto se acredite el pago.',
-      speiStep1: 'Abre la app o la banca en línea de tu banco y elige hacer una transferencia SPEI.',
-      speiStep2: 'Captura la CLABE y transfiere el monto exacto.',
-      speiStep3: 'Esta página mostrará “Pagado” en cuanto se acredite la transferencia.',
-      viewSlip: 'Ver / imprimir ficha en Mercado Pago ↗',
-      payment: 'Pago con Mercado Pago',
-      complete: 'Completa tu pago en Mercado Pago',
-      reserved: 'Tu pedido está apartado. Termina el pago desde tu cuenta de Mercado Pago.',
-      goTo: 'Ir a Mercado Pago',
-    };
+const texto = messages[locale].paymentInstructions;
 // Solo se enlaza a Mercado Pago por https.
 const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
 ---
@@ -139,14 +96,18 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
 }
 
 <script>
+  import { localizedText } from '../i18n/messages';
+
   document.querySelectorAll<HTMLButtonElement>('[data-copiar]').forEach((boton) => {
     boton.addEventListener('click', async () => {
       const original = boton.textContent;
       try {
         await navigator.clipboard.writeText(boton.dataset.copiar ?? '');
-        boton.textContent = document.documentElement.dataset.locale === 'en' ? 'Copied!' : '¡Copiado!';
+        const locale = document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
+        boton.textContent = localizedText(locale, '¡Copiado!');
       } catch {
-        boton.textContent = document.documentElement.dataset.locale === 'en' ? 'Could not copy' : 'No se pudo copiar';
+        const locale = document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
+        boton.textContent = localizedText(locale, 'No se pudo copiar');
       }
       setTimeout(() => (boton.textContent = original), 1800);
     });

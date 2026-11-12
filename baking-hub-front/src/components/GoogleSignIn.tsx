@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { messages } from '../i18n/messages';
 
 interface GoogleCredentialResponse {
   credential?: string;
@@ -51,19 +52,7 @@ interface Props {
 export default function GoogleSignIn({ clientId, next, locale }: Props) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
-  const t = locale === 'en'
-    ? {
-        notConfigured: 'Google sign-in is not configured.',
-        missingCredential: 'Google did not return a valid credential. Please try again.',
-        signInFailed: 'Could not sign in with Google.',
-        loadFailed: 'Could not load Google sign-in.',
-      }
-    : {
-        notConfigured: 'El inicio con Google no está configurado.',
-        missingCredential: 'Google no devolvió una credencial válida. Inténtalo de nuevo.',
-        signInFailed: 'No se pudo iniciar sesión con Google.',
-        loadFailed: 'No se pudo cargar el servicio de Google.',
-      };
+  const t = messages[locale].googleSignIn;
 
   useEffect(() => {
     let activo = true;

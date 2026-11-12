@@ -12,26 +12,15 @@ import {
 } from '../../lib/queries';
 import { ErrorFormulario, entero, mensajeError, nivelStock, numero, texto } from '../../lib/admin';
 import { precio } from '../../lib/format';
-import { localizedPath } from '../../lib/i18n';
+import { localizedPath, localizedText } from '../../lib/i18n';
+import { messages } from '../../i18n/messages';
 import { getSupabasePublicUrl } from '../../lib/supabase';
 import type { Producto } from '../../types';
 
 const token = Astro.locals.token;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const AVISOS: Record<string, string> = {
-  creado: 'Producto agregado al inventario.',
-  actualizado: 'Producto actualizado.',
-  stock: 'Existencias actualizadas.',
-  eliminado: 'Producto eliminado del catálogo.',
-};
-const AVISOS_EN: Record<string, string> = {
-  creado: 'Product added to inventory.',
-  actualizado: 'Product updated.',
-  stock: 'Inventory updated.',
-  eliminado: 'Product removed from the catalog.',
-};
 const avisoKey = Astro.url.searchParams.get('ok') ?? '';
-const aviso = locale === 'en' ? AVISOS_EN[avisoKey] ?? null : AVISOS[avisoKey] ?? null;
+const aviso = messages[locale].adminNotices.inventory[avisoKey as keyof typeof messages.es.adminNotices.inventory] ?? null;
 const urlInventario = (ok: string) => `${localizedPath(locale, '/admin/inventario')}?ok=${ok}`;
 
 let error: string | null = null;
@@ -96,51 +85,50 @@ try {
 }
 ---
 
-<AdminLayout titulo={locale === 'en' ? 'Inventory' : 'Inventario'} seccion="inventario">
-  <h2 class="admin-titulo">{locale === 'en' ? 'Inventory' : 'Inventario'}</h2>
+<AdminLayout titulo={localizedText(locale, 'Inventario')} seccion="inventario">
+  <h2 class="admin-titulo">{localizedText(locale, 'Inventario')}</h2>
   <p class="admin-subtitulo">
-    {locale === 'en' ? 'Add products and manage the available quantity for each one.' : 'Da de alta productos nuevos y controla cuántas piezas hay de cada uno.'}
+    {localizedText(locale, 'Da de alta productos nuevos y controla cuántas piezas hay de cada uno.')}
   </p>
 
   {aviso && <p class="mensaje-exito" role="status">{aviso}</p>}
   {error && <Alert>{error}</Alert>}
 
   <section class="admin-bloque">
-    <h3>{locale === 'en' ? 'Add a new product' : 'Agregar producto nuevo'}</h3>
+    <h3>{localizedText(locale, 'Agregar producto nuevo')}</h3>
     <form method="POST" class="form-grid">
       <input type="hidden" name="accion" value="crear" />
       <div class="campo-admin">
-        <label for="n-nombre">{locale === 'en' ? 'Name' : 'Nombre'}</label>
+        <label for="n-nombre">{localizedText(locale, 'Nombre')}</label>
         <input id="n-nombre" name="nombre" value={nuevo.nombre} maxlength="100" required />
       </div>
       <div class="campo-admin">
-        <label for="n-precio">{locale === 'en' ? 'Price (MXN)' : 'Precio (MXN)'}</label>
+        <label for="n-precio">{localizedText(locale, 'Precio (MXN)')}</label>
         <input id="n-precio" name="precio" type="number" step="0.01" min="0.01" value={nuevo.precio} required />
       </div>
       <div class="campo-admin">
-        <label for="n-stock">{locale === 'en' ? 'Initial quantity' : 'Piezas iniciales'}</label>
+        <label for="n-stock">{localizedText(locale, 'Piezas iniciales')}</label>
         <input id="n-stock" name="stock" type="number" step="1" min="0" value={nuevo.stock || '0'} required />
       </div>
       <div class="campo-admin ancho">
-        <label for="n-imagen">{locale === 'en' ? 'Image URL' : 'URL de la imagen'}</label>
+        <label for="n-imagen">{localizedText(locale, 'URL de la imagen')}</label>
         <input id="n-imagen" name="imagen" type="url" placeholder="https://…" value={nuevo.imagen} maxlength="255" required />
       </div>
-      <div class="ancho"><button class="btn-admin" type="submit">{locale === 'en' ? 'Add to inventory' : 'Agregar al inventario'}</button></div>
+      <div class="ancho"><button class="btn-admin" type="submit">{localizedText(locale, 'Agregar al inventario')}</button></div>
     </form>
   </section>
 
-  <h3 class="section-title">{locale === 'en' ? 'Products' : 'Productos'} ({productos.length})</h3>
+  <h3 class="section-title">{localizedText(locale, 'Productos')} ({productos.length})</h3>
   {productos.length === 0 && !error && (
-    <p class="estado-vacio">{locale === 'en' ? 'There are no products yet. Add the first one above.' : 'Todavía no hay productos. Agrega el primero arriba.'}</p>
+    <p class="estado-vacio">{localizedText(locale, 'Todavía no hay productos. Agrega el primero arriba.')}</p>
   )}
 
   <div class="lista-productos">
     {
       productos.map((p) => {
         const nivel = nivelStock(p.stock);
-        const etiquetaNivel = locale === 'en'
-          ? p.stock <= 0 ? 'Sold out' : p.stock <= 5 ? `Low stock: ${p.stock}` : `${p.stock} in stock`
-          : nivel.etiqueta;
+        const etiquetaNivel = localizedText(locale, nivel.etiqueta
+          .replace(String(p.stock), '{count}'), { count: p.stock });
         return (
           <article class="producto-fila">
             <img src={getSupabasePublicUrl(p.imagen) ?? p.imagen} alt={p.nombre} loading="lazy" />
@@ -163,45 +151,45 @@ try {
                   min="1"
                   step="1"
                   value="10"
-                  aria-label={locale === 'en' ? `Quantity to add for ${p.nombre}` : `Piezas a agregar de ${p.nombre}`}
+                  aria-label={localizedText(locale, 'Piezas a agregar de {nombre}', { nombre: p.nombre })}
                   required
                 />
-                <button class="btn-admin" type="submit">{locale === 'en' ? '+ Restock' : '+ Reabastecer'}</button>
+                <button class="btn-admin" type="submit">{localizedText(locale, '+ Reabastecer')}</button>
               </form>
               <div class="fila">
                 <form
                   method="POST"
-                  data-confirmar={locale === 'en' ? `Remove "${p.nombre}" from the catalog?` : `¿Eliminar "${p.nombre}" del catálogo?`}
+                  data-confirmar={localizedText(locale, '¿Eliminar "{nombre}" del catálogo?', { nombre: p.nombre })}
                 >
                   <input type="hidden" name="accion" value="eliminar" />
                   <input type="hidden" name="id" value={p.id} />
-                  <button class="btn-admin peligro" type="submit">{locale === 'en' ? 'Remove' : 'Eliminar'}</button>
+                  <button class="btn-admin peligro" type="submit">{localizedText(locale, 'Eliminar')}</button>
                 </form>
               </div>
             </div>
 
             <details>
-              <summary>{locale === 'en' ? 'Edit details' : 'Editar datos'}</summary>
+              <summary>{localizedText(locale, 'Editar datos')}</summary>
               <form method="POST" class="form-grid">
                 <input type="hidden" name="accion" value="actualizar" />
                 <input type="hidden" name="id" value={p.id} />
                 <div class="campo-admin">
-                  <label for={`e-nombre-${p.id}`}>{locale === 'en' ? 'Name' : 'Nombre'}</label>
+                  <label for={`e-nombre-${p.id}`}>{localizedText(locale, 'Nombre')}</label>
                   <input id={`e-nombre-${p.id}`} name="nombre" value={p.nombre} maxlength="100" required />
                 </div>
                 <div class="campo-admin">
-                  <label for={`e-precio-${p.id}`}>{locale === 'en' ? 'Price (MXN)' : 'Precio (MXN)'}</label>
+                  <label for={`e-precio-${p.id}`}>{localizedText(locale, 'Precio (MXN)')}</label>
                   <input id={`e-precio-${p.id}`} name="precio" type="number" step="0.01" min="0.01" value={p.precio} required />
                 </div>
                 <div class="campo-admin">
-                  <label for={`e-stock-${p.id}`}>{locale === 'en' ? 'Quantity' : 'Existencias'}</label>
+                  <label for={`e-stock-${p.id}`}>{localizedText(locale, 'Existencias')}</label>
                   <input id={`e-stock-${p.id}`} name="stock" type="number" step="1" min="0" value={p.stock} required />
                 </div>
                 <div class="campo-admin ancho">
-                  <label for={`e-imagen-${p.id}`}>{locale === 'en' ? 'Image URL' : 'URL de la imagen'}</label>
+                  <label for={`e-imagen-${p.id}`}>{localizedText(locale, 'URL de la imagen')}</label>
                   <input id={`e-imagen-${p.id}`} name="imagen" type="url" value={p.imagen} maxlength="255" required />
                 </div>
-                <div class="ancho"><button class="btn-admin" type="submit">{locale === 'en' ? 'Save changes' : 'Guardar cambios'}</button></div>
+                <div class="ancho"><button class="btn-admin" type="submit">{localizedText(locale, 'Guardar cambios')}</button></div>
               </form>
             </details>
           </article>

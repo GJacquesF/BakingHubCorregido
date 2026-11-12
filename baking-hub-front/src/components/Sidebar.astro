@@ -1,6 +1,7 @@
 ---
 import { CATEGORIAS } from '../lib/categorias';
-import { localizedPath } from '../lib/i18n';
+import { localizedPath, localizedText } from '../lib/i18n';
+import { messages } from '../i18n/messages';
 
 interface Props {
   activa?: string;
@@ -8,9 +9,7 @@ interface Props {
 
 const { activa } = Astro.props;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const strings = locale === 'en'
-  ? { heading: 'Categories', all: 'All', viewAll: 'View all' }
-  : { heading: 'Categorías', all: 'Todas', viewAll: 'Ver todo' };
+const strings = messages[locale].sidebar;
 const href = (categoria: string) => localizedPath(
   locale,
   categoria === 'Todas' ? '/' : `/categoria/${encodeURIComponent(categoria)}`,
@@ -30,8 +29,8 @@ const href = (categoria: string) => localizedPath(
           >
             {categoria === 'Todas'
               ? strings.viewAll
-              : locale === 'en' && categoria === 'Panadería'
-                ? 'Bakery'
+              : categoria === 'Panadería'
+                ? localizedText(locale, categoria)
                 : categoria}
           </a>
         </li>

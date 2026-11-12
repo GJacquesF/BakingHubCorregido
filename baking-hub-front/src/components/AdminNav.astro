@@ -3,25 +3,25 @@ interface Props {
   activa: 'resumen' | 'pedidos' | 'inventario' | 'entregas' | 'usuarios';
 }
 
-import { localizedPath } from '../lib/i18n';
+import { localizedPath, localizedText } from '../lib/i18n';
 
 const { activa } = Astro.props;
 const enlaces = [
-  { clave: 'resumen', path: '/admin', texto: 'Resumen', textoEn: 'Summary' },
-  { clave: 'pedidos', path: '/admin/pedidos', texto: 'Pedidos', textoEn: 'Orders' },
-  { clave: 'inventario', path: '/admin/inventario', texto: 'Inventario', textoEn: 'Inventory' },
-  { clave: 'entregas', path: '/admin/entregas', texto: 'Entregas', textoEn: 'Deliveries' },
-  { clave: 'usuarios', path: '/admin/usuarios', texto: 'Clientes', textoEn: 'Customers' },
+  { clave: 'resumen', path: '/admin', texto: 'Resumen' },
+  { clave: 'pedidos', path: '/admin/pedidos', texto: 'Pedidos' },
+  { clave: 'inventario', path: '/admin/inventario', texto: 'Inventario' },
+  { clave: 'entregas', path: '/admin/entregas', texto: 'Entregas' },
+  { clave: 'usuarios', path: '/admin/usuarios', texto: 'Clientes' },
 ] as const;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 ---
 
-<nav class="admin-nav" aria-label={locale === 'en' ? 'Administration panel' : 'Panel de administración'}>
-  <span class="admin-nav-titulo">{locale === 'en' ? 'Admin panel' : 'Panel admin'}</span>
+<nav class="admin-nav" aria-label={localizedText(locale, 'Panel de administración')}>
+  <span class="admin-nav-titulo">{localizedText(locale, 'Panel admin')}</span>
   {
     enlaces.map((e) => (
       <a href={localizedPath(locale, e.path)} class:list={['admin-enlace', { activa: activa === e.clave }]} aria-current={activa === e.clave ? 'page' : undefined}>
-        {locale === 'en' ? e.textoEn : e.texto}
+        {localizedText(locale, e.texto)}
       </a>
     ))
   }

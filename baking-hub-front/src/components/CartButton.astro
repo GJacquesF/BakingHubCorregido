@@ -1,17 +1,18 @@
 ---
 import { totalArticulos } from '../stores/carrito';
-import { localizedPath } from '../lib/i18n';
+import { localizedPath, localizedText } from '../lib/i18n';
 
 const cantidad = totalArticulos.get();
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const label = locale === 'en' ? 'Cart' : 'Carrito';
+const label = localizedText(locale, 'Carrito');
 ---
 
-<a class="cart-button" href={localizedPath(locale, '/carrito')} aria-live="polite" aria-atomic="true" aria-label={locale === 'en' ? `Cart, ${cantidad} items` : `Carrito, ${cantidad} artículos`}>
+<a class="cart-button" href={localizedPath(locale, '/carrito')} aria-live="polite" aria-atomic="true" aria-label={localizedText(locale, 'Carrito, {count} artículos', { count: cantidad })}>
   <span data-i18n="cart.label">{label}</span> (<span data-cart-count>{cantidad}</span>)
 </a>
 
 <script>
+  import { localizedText } from '../i18n/messages';
   import { totalArticulos } from '../stores/carrito';
 
   totalArticulos.subscribe((cantidad) => {
@@ -20,10 +21,10 @@ const label = locale === 'en' ? 'Cart' : 'Carrito';
       const labelNode = enlace.querySelector('[data-i18n="cart.label"]');
       if (contador) contador.textContent = String(cantidad);
 
-      const locale = document.documentElement.dataset.locale || 'es';
-      const label = locale === 'en' ? 'Cart' : 'Carrito';
+      const locale = document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
+      const label = localizedText(locale, 'Carrito');
       if (labelNode) labelNode.textContent = label;
-      enlace.setAttribute('aria-label', locale === 'en' ? `Cart, ${cantidad} items` : `Carrito, ${cantidad} artículos`);
+      enlace.setAttribute('aria-label', localizedText(locale, 'Carrito, {count} artículos', { count: cantidad }));
     });
   });
 </script>

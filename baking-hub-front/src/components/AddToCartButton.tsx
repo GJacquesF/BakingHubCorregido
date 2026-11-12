@@ -1,3 +1,4 @@
+import { localizedText } from '../i18n/messages';
 import { agregar } from "../stores/carrito";
 import type { Producto } from "../types";
 
@@ -6,7 +7,7 @@ export default function AddToCartButton({ producto }: { producto: Producto }) {
     if (producto.stock <= 0) {
         return (
             <button className="btn-primario" disabled data-i18n="product.soldOut">
-                {locale === 'en' ? 'Sold out' : 'Agotado'}
+                {localizedText(locale, 'Agotado')}
             </button>
         );
     }
@@ -18,7 +19,7 @@ export default function AddToCartButton({ producto }: { producto: Producto }) {
 
     return (
         <button className="btn-primario" onClick={alHacerClic} data-i18n="product.addToCart">
-            {locale === 'en' ? 'Add to cart' : 'Añadir al carrito'}
+            {localizedText(locale, 'Añadir al carrito')}
         </button>
     );
 }

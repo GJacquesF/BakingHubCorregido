@@ -1,3 +1,4 @@
+import { localizedText } from '../i18n/messages';
 import { useEffect, useRef, useState } from 'react';
 import { obtenerMercadoPago, type DatosTarjeta } from '../lib/mercadopago-cliente';
 import type { ErroresTarjeta } from '../lib/tarjeta';
@@ -57,9 +58,7 @@ export default function FormularioTarjeta({ modo, locale, valores, errores, desh
   if (modo === 'simulado') {
     return (
       <p className="instrucciones" role="note">
-        {locale === 'en'
-          ? 'Demo mode does not charge you or require card details. Continuing will mark the order as paid for testing.'
-          : 'En modo demostración no se realiza ningún cargo ni necesitas ingresar datos de tarjeta. Al continuar, el pedido quedará marcado como pagado de forma simulada.'}
+        {localizedText(locale, 'En modo demostración no se realiza ningún cargo ni necesitas ingresar datos de tarjeta. Al continuar, el pedido quedará marcado como pagado de forma simulada.')}
       </p>
     );
   }
@@ -73,16 +72,16 @@ export default function FormularioTarjeta({ modo, locale, valores, errores, desh
       )}
 
       <div className="campo-pago">
-        <label htmlFor="tc-numero">{locale === 'en' ? 'Card number' : 'Número de tarjeta'}</label>
+        <label htmlFor="tc-numero">{localizedText(locale, 'Número de tarjeta')}</label>
         <div id="tc-numero" className="mp-input-container" />
       </div>
 
       <div className="campo-pago">
-        <label htmlFor="tc-titular">{locale === 'en' ? 'Cardholder name' : 'Nombre del titular'}</label>
+        <label htmlFor="tc-titular">{localizedText(locale, 'Nombre del titular')}</label>
         <input
           id="tc-titular"
           autoComplete="cc-name"
-          placeholder={locale === 'en' ? 'As shown on the card' : 'Como aparece en la tarjeta'}
+          placeholder={localizedText(locale, 'Como aparece en la tarjeta')}
           value={valores.titular}
           disabled={deshabilitado}
           onChange={(e) => onChange({ ...valores, titular: e.target.value })}
@@ -93,11 +92,11 @@ export default function FormularioTarjeta({ modo, locale, valores, errores, desh
 
       <div className="fila-doble">
         <div className="campo-pago">
-          <label htmlFor="tc-venc">{locale === 'en' ? 'Expiration date' : 'Vencimiento'}</label>
+          <label htmlFor="tc-venc">{localizedText(locale, 'Vencimiento')}</label>
           <div id="tc-venc" className="mp-input-container" />
         </div>
         <div className="campo-pago">
-          <label htmlFor="tc-cvv">{locale === 'en' ? 'Security code (CVV)' : 'Código (CVV)'}</label>
+          <label htmlFor="tc-cvv">{localizedText(locale, 'Código (CVV)')}</label>
           <div id="tc-cvv" className="mp-input-container" />
         </div>
       </div>

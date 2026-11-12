@@ -1,4 +1,5 @@
 ---
+import { localizedText } from '../../lib/i18n';
 // Consulta de pedidos y actualización del estado de preparación (solo administrador).
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import Alert from '../../components/Alert.astro';
@@ -12,7 +13,7 @@ import type { PedidoAdmin } from '../../types';
 const token = Astro.locals.token;
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const aviso = Astro.url.searchParams.get('ok') === 'actualizado'
-  ? locale === 'en' ? 'Order status updated.' : 'Estado del pedido actualizado.'
+  ? localizedText(locale, 'Estado del pedido actualizado.')
   : null;
 let pedidos: PedidoAdmin[] = [];
 let error: string | null = null;
@@ -24,51 +25,49 @@ try {
 }
 ---
 
-<AdminLayout titulo={locale === 'en' ? 'Orders' : 'Pedidos'} seccion="pedidos">
-  <h2 class="admin-titulo">{locale === 'en' ? 'Orders' : 'Pedidos'}</h2>
+<AdminLayout titulo={localizedText(locale, 'Pedidos')} seccion="pedidos">
+  <h2 class="admin-titulo">{localizedText(locale, 'Pedidos')}</h2>
   <p class="admin-subtitulo">
-    {locale === 'en'
-      ? 'Review each customer’s order and when it was placed. Personal details are hidden by default.'
-      : 'Revisa qué pidió cada cliente y cuándo se registró. Los datos personales están ocultos inicialmente.'}
+    {localizedText(locale, 'Revisa qué pidió cada cliente y cuándo se registró. Los datos personales están ocultos inicialmente.')}
   </p>
 
   {aviso && <p class="mensaje-exito" role="status">{aviso}</p>}
   {error && <Alert>{error}</Alert>}
 
   {pedidos.length === 0 && !error && (
-    <p class="estado-vacio">{locale === 'en' ? 'No orders have been placed yet.' : 'Todavía no hay pedidos registrados.'}</p>
+    <p class="estado-vacio">{localizedText(locale, 'Todavía no hay pedidos registrados.')}</p>
   )}
 
   {pedidos.length > 0 && (
     <>
       <div class="pedidos-controles">
-        <div class="filtro-pedidos" role="group" aria-label={locale === 'en' ? 'Filter orders by payment status' : 'Filtrar pedidos por estado de pago'}>
+        <div class="filtro-pedidos" role="group" aria-label={localizedText(locale, 'Filtrar pedidos por estado de pago')}>
           <button type="button" class="filtro-pedido activo" data-order-filter="all" aria-pressed="true">
-            {locale === 'en' ? 'All' : 'Todos'} <span>{pedidos.length}</span>
+            {localizedText(locale, 'Todos')} <span>{pedidos.length}</span>
           </button>
           <button type="button" class="filtro-pedido" data-order-filter="paid" aria-pressed="false">
-            {locale === 'en' ? 'Paid' : 'Pagados'} <span>{pedidos.filter((pedido) => pedido.status.toLowerCase() === 'pagado').length}</span>
+            {localizedText(locale, 'Pagados')} <span>{pedidos.filter((pedido) => pedido.status.toLowerCase() === 'pagado').length}</span>
           </button>
         </div>
         <p class="resultado-filtro" data-order-count aria-live="polite">
-          {locale === 'en' ? `Showing ${pedidos.length} orders` : `Mostrando ${pedidos.length} pedidos`}
+          {localizedText(locale, 'Mostrando {count} pedidos', { count: pedidos.length })}
         </p>
       </div>
       <p class="estado-vacio filtro-vacio" data-order-empty hidden>
-        {locale === 'en' ? 'There are no paid orders.' : 'No hay pedidos pagados.'}
+        {localizedText(locale, 'No hay pedidos pagados.')}
       </p>
       <div class="tabla-wrap" data-order-table>
       <table class="tabla-admin tabla-pedidos">
         <thead>
           <tr>
-            <th scope="col">{locale === 'en' ? 'Order' : 'Pedido'}</th>
-            <th scope="col">{locale === 'en' ? 'Customer' : 'Cliente'}</th>
-            <th scope="col">{locale === 'en' ? 'Date' : 'Cuándo'}</th>
-            <th scope="col">{locale === 'en' ? 'Items' : 'Qué pidió'}</th>
+            <th scope="col">{localizedText(locale, 'Pedido')}</th>
+            <th scope="col">{localizedText(locale, 'Cliente')}</th>
+            <th scope="col">{localizedText(locale, 'Cuándo')}</th>
+            <th scope="col">{localizedText(locale, 'Qué pidió')}</th>
             <th scope="col" class="num">Total</th>
-            <th scope="col">{locale === 'en' ? 'Payment' : 'Pago'}</th>
-            <th scope="col">{locale === 'en' ? 'Preparation' : 'Preparación'}</th>
-            <th scope="col">{locale === 'en' ? 'Action' : 'Acción'}</th>
+            <th scope="col">{localizedText(locale, 'Pago')}</th>
+            <th scope="col">{localizedText(locale, 'Preparación')}</th>
+            <th scope="col">{localizedText(locale, 'Acción')}</th>
           </tr>
         </thead>
         <tbody>
@@ -76,16 +75,16 @@ try {
             const pago = estadoPedido(pedido.status, locale);
             return (
               <tr data-payment-status={pedido.status.toLowerCase()}>
-                <td data-label={locale === 'en' ? 'Order' : 'Pedido'}><strong>#{pedido.id}</strong></td>
-                <td data-label={locale === 'en' ? 'Customer' : 'Cliente'}>
+                <td data-label={localizedText(locale, 'Pedido')}><strong>#{pedido.id}</strong></td>
+                <td data-label={localizedText(locale, 'Cliente')}>
                   <div class="pedido-cliente">
                     <button
                       class="pedido-ojo"
                       type="button"
                       data-customer-toggle
-                      aria-label={locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}
+                      aria-label={localizedText(locale, 'Mostrar datos del cliente')}
                       aria-expanded="false"
-                      title={locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}
+                      title={localizedText(locale, 'Mostrar datos del cliente')}
                     >
                       <svg data-eye-open viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
@@ -95,7 +94,7 @@ try {
                         <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
                         <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a15.8 15.8 0 0 1-4.1 4.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.3 0 2.5-.3 3.5-.7" />
                       </svg>
-                      <span class="solo-lector">{locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}</span>
+                      <span class="solo-lector">{localizedText(locale, 'Mostrar datos del cliente')}</span>
                     </button>
                     <div data-customer-details hidden>
                       <strong>{pedido.clienteNombre}</strong>
@@ -103,8 +102,8 @@ try {
                     </div>
                   </div>
                 </td>
-                <td data-label={locale === 'en' ? 'Date' : 'Cuándo'} data-column="date">{formatearFecha(pedido.fecha, locale)}</td>
-                <td data-label={locale === 'en' ? 'Items' : 'Qué pidió'} data-column="products">
+                <td data-label={localizedText(locale, 'Cuándo')} data-column="date">{formatearFecha(pedido.fecha, locale)}</td>
+                <td data-label={localizedText(locale, 'Qué pidió')} data-column="products">
                   <ul class="pedido-productos-admin">
                     {pedido.productos.map((producto) => (
                       <li>{producto.cantidad} × {producto.nombre}</li>
@@ -121,19 +120,19 @@ try {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {locale === 'en' ? 'View on map' : 'Ver en el mapa'}
+                        {localizedText(locale, 'Ver en el mapa')}
                       </a>
                     </p>
                   )}
                 </td>
                 <td data-label="Total" class="num">{precio(pedido.total)}</td>
-                <td data-label={locale === 'en' ? 'Payment' : 'Pago'}><span class={`badge badge-${pago.clase}`}>{pago.etiqueta}</span></td>
-                <td data-label={locale === 'en' ? 'Preparation' : 'Preparación'}>
-                  <span class="badge badge-warn" data-order-state>{locale === 'en' ? 'Not completed' : 'No completado'}</span>
+                <td data-label={localizedText(locale, 'Pago')}><span class={`badge badge-${pago.clase}`}>{pago.etiqueta}</span></td>
+                <td data-label={localizedText(locale, 'Preparación')}>
+                  <span class="badge badge-warn" data-order-state>{localizedText(locale, 'No completado')}</span>
                 </td>
-                <td data-label={locale === 'en' ? 'Action' : 'Acción'} data-column="action">
+                <td data-label={localizedText(locale, 'Acción')} data-column="action">
                   <button class="btn-admin" type="button" data-order-toggle data-order-id={pedido.id} aria-pressed="false">
-                    {locale === 'en' ? 'Mark completed' : 'Marcar completado'}
+                    {localizedText(locale, 'Marcar completado')}
                   </button>
                 </td>
               </tr>
@@ -213,28 +212,10 @@ try {
 </style>
 
 <script>
+  import { messages } from '../../i18n/messages';
+
   const locale = document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
-  const texto = locale === 'en'
-    ? {
-        complete: 'Completed',
-        incomplete: 'Not completed',
-        markComplete: 'Mark completed',
-        markIncomplete: 'Mark not completed',
-        hideCustomer: 'Hide customer details',
-        showCustomer: 'Show customer details',
-        showingOne: 'Showing 1 order',
-        showingMany: (count: number) => `Showing ${count} orders`,
-      }
-    : {
-        complete: 'Completado',
-        incomplete: 'No completado',
-        markComplete: 'Marcar completado',
-        markIncomplete: 'Marcar no completado',
-        hideCustomer: 'Ocultar datos del cliente',
-        showCustomer: 'Mostrar datos del cliente',
-        showingOne: 'Mostrando 1 pedido',
-        showingMany: (count: number) => `Mostrando ${count} pedidos`,
-      };
+  const texto = messages[locale].adminOrders;
   const claveEstadoPedidos = 'baking-hub-pedidos-completados';
   let completados: string[] = [];
   try {
@@ -311,7 +292,9 @@ try {
       });
 
       if (contadorResultados) {
-        contadorResultados.textContent = visibles === 1 ? texto.showingOne : texto.showingMany(visibles);
+        contadorResultados.textContent = visibles === 1
+          ? texto.showingOne
+          : texto.showingMany.replace('{count}', String(visibles));
       }
       if (mensajeSinResultados) mensajeSinResultados.hidden = visibles > 0;
       if (tablaPedidos) tablaPedidos.hidden = visibles === 0;

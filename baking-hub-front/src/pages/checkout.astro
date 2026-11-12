@@ -5,7 +5,7 @@ import CheckoutView from '../components/CheckoutView';
 import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { CONFIG_PAGOS, PUNTOS_ENTREGA } from '../lib/queries';
-import { localizedMessage } from '../lib/i18n';
+import { localizedMessage, localizedText } from '../lib/i18n';
 import type { ConfigPagos, PuntoEntrega } from '../types';
 
 const usuario = Astro.locals.usuario!;
@@ -24,15 +24,15 @@ try {
 
 <Layout titulo="Checkout" sidebar>
   <script is:inline src="https://sdk.mercadopago.com/js/v2" defer></script>
-  <h2 class="section-title">{locale === 'en' ? 'Complete your purchase' : 'Finalizar compra'}</h2>
+  <h2 class="section-title">{localizedText(locale, 'Finalizar compra')}</h2>
   {error && (
-    <Alert>{locale === 'en' ? 'We could not load payment methods:' : 'No pudimos cargar los métodos de pago:'}{' '}{error}</Alert>
+    <Alert>{localizedText(locale, 'No pudimos cargar los métodos de pago:')}{' '}{error}</Alert>
   )}
   {
     config && (
       <CheckoutView client:only="react" config={config} puntos={puntos} usuario={{ nombre: usuario.nombre, email: usuario.email }} locale={locale}>
         <p slot="fallback" class="estado-vacio">
-          {locale === 'en' ? 'Loading your order…' : 'Cargando tu orden…'}
+          {localizedText(locale, 'Cargando tu orden…')}
         </p>
       </CheckoutView>
     )
