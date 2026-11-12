@@ -1,0 +1,87 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AuthCard from './AuthCard.astro';
+import FormField from './FormField.astro';
+import Alert from './Alert.astro';
+import GoogleSignIn from './GoogleSignIn';
+import { localizedPath, type AppLocale } from '../lib/i18n';
+
+interface Props {
+  locale: AppLocale;
+  next: string;
+  email: string;
+  nombre: string;
+  error: string | null;
+  mensaje: string | null;
+  registroExitoso: boolean;
+  turnstileSiteKey?: string;
+  googleClientId?: string;
+}
+
+const {
+  locale,
+  next,
+  email,
+  nombre,
+  error,
+  mensaje,
+  registroExitoso,
+  turnstileSiteKey,
+  googleClientId,
+} = Astro.props;
+const loginPath = localizedPath(locale, '/login');
+const registerPath = localizedPath(locale, '/registro');
+const loginHref = `${loginPath}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`;
+---
+
+{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+
+<Layout titulo={locale === 'en' ? 'Create account' : 'Crear cuenta'}>
+  <AuthCard
+    titulo="Crear cuenta"
+    tituloKey="auth.registerTitle"
+    subtitulo="Con tu cuenta puedes pagar y ver tus pedidos anteriores."
+    subtituloKey="auth.registerSubtitle"
+  >
+    {error && <Alert>{error}</Alert>}
+    {mensaje && <p role="status">{mensaje}</p>}
+    {registroExitoso ? (
+      <p><a href={loginHref} data-i18n="auth.continue">Ir a iniciar sesión</a></p>
+    ) : (
+      <>
+        <form method="POST" action={`${registerPath}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>
+          <FormField label="Nombre" translationKey="auth.name" name="nombre" autocomplete="name" value={nombre} minlength={2} />
+          <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
+          <FormField label="Contraseña (mínimo 8 caracteres)" translationKey="auth.password" name="password" type="password" autocomplete="new-password" minlength={8} />
+          <FormField label="Repite la contraseña" translationKey="auth.repeatPassword" name="confirmar" type="password" autocomplete="new-password" minlength={8} />
+          {turnstileSiteKey && (
+            <div class="turnstile-wrap">
+              <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light" data-size="normal" />
+            </div>
+          )}
+          <button class="btn-primario" type="submit" data-i18n="auth.submitRegister">Crear cuenta</button>
+        </form>
+        <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
+        <GoogleSignIn client:load clientId={googleClientId} next={next} locale={locale} />
+      </>
+    )}
+    <Fragment slot="pie">
+      <span data-i18n="auth.alreadyAccount">¿Ya tienes cuenta?</span>{' '}
+      <a href={loginHref} data-i18n="auth.submitLogin">Ingresar</a>
+    </Fragment>
+  </AuthCard>
+</Layout>
+
+<style>
+  .separador-auth {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    color: var(--espresso-soft);
+  }
+
+  .turnstile-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 0.5rem;
+  }
+</style>

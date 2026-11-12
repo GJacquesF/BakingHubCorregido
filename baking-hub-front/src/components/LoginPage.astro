@@ -1,0 +1,66 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AuthCard from './AuthCard.astro';
+import FormField from './FormField.astro';
+import Alert from './Alert.astro';
+import GoogleSignIn from './GoogleSignIn';
+import { localizedPath, type AppLocale } from '../lib/i18n';
+
+interface Props {
+  locale: AppLocale;
+  next: string;
+  email: string;
+  error: string | null;
+  turnstileSiteKey?: string;
+  googleClientId?: string;
+}
+
+const { locale, next, email, error, turnstileSiteKey, googleClientId } = Astro.props;
+const loginPath = localizedPath(locale, '/login');
+const registerPath = localizedPath(locale, '/registro');
+---
+
+{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+
+<Layout titulo={locale === 'en' ? 'Sign in' : 'Ingresar'}>
+  <AuthCard
+    titulo="Ingresar"
+    tituloKey="auth.loginTitle"
+    subtitulo="Entra para confirmar tus pedidos y revisar tu historial."
+    subtituloKey="auth.loginSubtitle"
+  >
+    {error && <Alert>{error}</Alert>}
+    <form method="POST" action={`${loginPath}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>
+      <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
+      <FormField label="Contraseña" translationKey="auth.password" name="password" type="password" autocomplete="current-password" />
+      {turnstileSiteKey && (
+        <div class="turnstile-wrap">
+          <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light" data-size="normal" />
+        </div>
+      )}
+      <button class="btn-primario" type="submit" data-i18n="auth.submitLogin">Ingresar</button>
+    </form>
+    <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
+    <GoogleSignIn client:load clientId={googleClientId} next={next} locale={locale} />
+    <Fragment slot="pie">
+      <span data-i18n="auth.noAccount">¿No tienes cuenta?</span>{' '}
+      <a href={`${registerPath}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.createAccount">
+        Crear cuenta
+      </a>
+    </Fragment>
+  </AuthCard>
+</Layout>
+
+<style>
+  .separador-auth {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    color: var(--espresso-soft);
+  }
+
+  .turnstile-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 0.5rem;
+  }
+</style>

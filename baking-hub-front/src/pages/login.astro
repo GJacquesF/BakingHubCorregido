@@ -1,98 +1,22 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import AuthCard from '../components/AuthCard.astro';
-import FormField from '../components/FormField.astro';
-import Alert from '../components/Alert.astro';
-import GoogleSignIn from '../components/GoogleSignIn';
-import { graphql, ApiError } from '../lib/graphql';
-import { LOGIN } from '../lib/queries';
-import { guardarSesion, rutaSegura } from '../lib/auth';
-import { localizedPath } from '../lib/i18n';
-
+import LoginPage from '../components/LoginPage.astro';
+import { processLogin } from '../lib/auth-pages';
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const next = rutaSegura(Astro.url.searchParams.get('next'));
-if (Astro.locals.usuario) return Astro.redirect(localizedPath(locale, next));
-
-let error: string | null = null;
-let email = '';
-
-if (Astro.request.method === 'POST') {
-  const datos = await Astro.request.formData();
-  email = String(datos.get('email') ?? '').trim();
-  const password = String(datos.get('password') ?? '');
-  const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
-  const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
-
-  if (turnstileEnabled && !turnstileToken) {
-    error = locale === 'en'
-      ? 'Complete the security check before signing in.'
-      : 'Completa la verificación de seguridad antes de iniciar sesión.';
-  } else {
-    try {
-      const { login } = await graphql<{ login: { token: string } }>(LOGIN, {
-        email,
-        password,
-        turnstileToken: turnstileEnabled ? turnstileToken : null,
-      });
-      guardarSesion(Astro.cookies, login.token);
-      return Astro.redirect(localizedPath(locale, next), 303);
-    } catch (e) {
-      const esDeUsuario = e instanceof ApiError && ['UNAUTHENTICATED', 'BAD_USER_INPUT'].includes(e.codigo);
-      error = esDeUsuario
-        ? e.message
-        : locale === 'en'
-          ? 'We could not sign you in. Please try again in a moment.'
-          : 'No pudimos iniciar sesión. Inténtalo de nuevo en un momento.';
-    }
-  }
-}
+const result = await processLogin({
+  request: Astro.request,
+  cookies: Astro.cookies,
+  usuario: Astro.locals.usuario,
+  locale,
+  turnstileSiteKey: import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY,
+});
+if ('redirect' in result) return Astro.redirect(result.redirect, result.status);
 ---
 
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-
-<Layout titulo="Ingresar">
-  <AuthCard
-    titulo="Ingresar"
-    tituloKey="auth.loginTitle"
-    subtitulo="Entra para confirmar tus pedidos y revisar tu historial."
-    subtituloKey="auth.loginSubtitle"
-  >
-    {error && <Alert>{error}</Alert>}
-    <form method="POST">
-      <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
-      <FormField label="Contraseña" translationKey="auth.password" name="password" type="password" autocomplete="current-password" />
-      {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ? (
-        <div class="turnstile-wrap">
-          <div
-            class="cf-turnstile"
-            data-sitekey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
-            data-theme="light"
-            data-size="normal"
-          />
-        </div>
-      ) : null}
-      <button class="btn-primario" type="submit" data-i18n="auth.submitLogin">Ingresar</button>
-    </form>
-    <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
-    <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} locale={locale} />
-    <Fragment slot="pie">
-      <span data-i18n="auth.noAccount">¿No tienes cuenta?</span>{' '}
-      <a href={`${localizedPath(locale, '/registro')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.createAccount">Crear cuenta</a>
-    </Fragment>
-  </AuthCard>
-</Layout>
-
-<style>
-  .separador-auth {
-    margin: 1.25rem 0 0;
-    text-align: center;
-    color: var(--espresso-soft);
-  }
-
-  .turnstile-wrap {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0 0.5rem;
-  }
-
-</style>
+<LoginPage
+  locale={locale}
+  next={result.next}
+  email={result.email}
+  error={result.error}
+  turnstileSiteKey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
+  googleClientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID}
+/>

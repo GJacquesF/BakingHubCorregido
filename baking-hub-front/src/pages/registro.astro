@@ -1,115 +1,24 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import AuthCard from '../components/AuthCard.astro';
-import FormField from '../components/FormField.astro';
-import Alert from '../components/Alert.astro';
-import GoogleSignIn from '../components/GoogleSignIn';
-import { graphql, ApiError } from '../lib/graphql';
-import { REGISTRAR } from '../lib/queries';
-import { rutaSegura } from '../lib/auth';
-import { localizedPath } from '../lib/i18n';
-
+import RegistrationPage from '../components/RegistrationPage.astro';
+import { processRegistration } from '../lib/auth-pages';
 const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
-const next = rutaSegura(Astro.url.searchParams.get('next'));
-if (Astro.locals.usuario) return Astro.redirect(localizedPath(locale, next));
-
-let error: string | null = null;
-let mensaje: string | null = null;
-let nombre = '';
-let email = (Astro.url.searchParams.get('email') ?? '').trim();
-let registroExitoso = false;
-
-if (Astro.request.method === 'POST') {
-  const datos = await Astro.request.formData();
-  email = String(datos.get('email') ?? '').trim();
-  nombre = String(datos.get('nombre') ?? '').trim();
-  const password = String(datos.get('password') ?? '');
-  const confirmar = String(datos.get('confirmar') ?? '');
-  const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
-  const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
-
-  if (turnstileEnabled && !turnstileToken) {
-    error = locale === 'en'
-      ? 'Complete the security check before creating an account.'
-      : 'Completa la verificación de seguridad antes de crear la cuenta.';
-  } else if (password !== confirmar) {
-    error = locale === 'en' ? 'The passwords do not match.' : 'Las contraseñas no coinciden.';
-  } else {
-    try {
-      await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, {
-        nombre,
-        email,
-        password,
-        turnstileToken: turnstileEnabled ? turnstileToken : null,
-      });
-      registroExitoso = true;
-      mensaje = locale === 'en' ? 'Account created. You can now sign in.' : 'Cuenta creada. Ya puedes iniciar sesión.';
-    } catch (e) {
-      error =
-        e instanceof ApiError && e.codigo === 'BAD_USER_INPUT'
-          ? e.message
-          : locale === 'en'
-            ? 'We could not create your account. Please try again in a moment.'
-            : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
-    }
-  }
-}
+const result = await processRegistration({
+  request: Astro.request,
+  usuario: Astro.locals.usuario,
+  locale,
+  turnstileSiteKey: import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY,
+});
+if ('redirect' in result) return Astro.redirect(result.redirect, result.status);
 ---
 
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-
-<Layout titulo="Crear cuenta">
-  <AuthCard
-    titulo="Crear cuenta"
-    tituloKey="auth.registerTitle"
-    subtitulo="Con tu cuenta puedes pagar y ver tus pedidos anteriores."
-    subtituloKey="auth.registerSubtitle"
-  >
-    {error && <Alert>{error}</Alert>}
-    {mensaje && <p role="status">{mensaje}</p>}
-    {registroExitoso ? (
-      <p><a href={`${localizedPath(locale, '/login')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.continue">Ir a iniciar sesión</a></p>
-    ) : (
-      <>
-        <form method="POST">
-          <FormField label="Nombre" translationKey="auth.name" name="nombre" autocomplete="name" value={nombre} minlength={2} />
-          <FormField label="Correo" translationKey="auth.email" name="email" type="email" autocomplete="email" value={email} />
-          <FormField label="Contraseña (mínimo 8 caracteres)" translationKey="auth.password" name="password" type="password" autocomplete="new-password" minlength={8} />
-          <FormField label="Repite la contraseña" translationKey="auth.repeatPassword" name="confirmar" type="password" autocomplete="new-password" minlength={8} />
-          {import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ? (
-            <div class="turnstile-wrap">
-              <div
-                class="cf-turnstile"
-                data-sitekey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
-                data-theme="light"
-                data-size="normal"
-              />
-            </div>
-          ) : null}
-          <button class="btn-primario" type="submit" data-i18n="auth.submitRegister">Crear cuenta</button>
-        </form>
-        <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
-        <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} locale={locale} />
-      </>
-    )}
-    <Fragment slot="pie">
-      <span data-i18n="auth.alreadyAccount">¿Ya tienes cuenta?</span>{' '}
-      <a href={`${localizedPath(locale, '/login')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.submitLogin">Ingresar</a>
-    </Fragment>
-  </AuthCard>
-</Layout>
-
-<style>
-  .separador-auth {
-    margin: 1.25rem 0 0;
-    text-align: center;
-    color: var(--espresso-soft);
-  }
-
-  .turnstile-wrap {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0 0.5rem;
-  }
-
-</style>
+<RegistrationPage
+  locale={locale}
+  next={result.next}
+  email={result.email}
+  nombre={result.nombre}
+  error={result.error}
+  mensaje={result.mensaje}
+  registroExitoso={result.registroExitoso}
+  turnstileSiteKey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
+  googleClientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID}
+/>

@@ -1,5 +1,22 @@
 ---
-import Login from '../login.astro';
+import LoginPage from '../../components/LoginPage.astro';
+import { processLogin } from '../../lib/auth-pages';
+const locale = 'en';
+const result = await processLogin({
+  request: Astro.request,
+  cookies: Astro.cookies,
+  usuario: Astro.locals.usuario,
+  locale,
+  turnstileSiteKey: import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY,
+});
+if ('redirect' in result) return Astro.redirect(result.redirect, result.status);
 ---
 
-<Login />
+<LoginPage
+  locale={locale}
+  next={result.next}
+  email={result.email}
+  error={result.error}
+  turnstileSiteKey={import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY}
+  googleClientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID}
+/>
