@@ -1,7 +1,7 @@
 const CACHE_PREFIX = 'baking-hub-';
-const SHELL_CACHE = `${CACHE_PREFIX}shell-v3`;
-const PAGE_CACHE = `${CACHE_PREFIX}pages-v3`;
-const ASSET_CACHE = `${CACHE_PREFIX}assets-v3`;
+const SHELL_CACHE = `${CACHE_PREFIX}shell-v4`;
+const PAGE_CACHE = `${CACHE_PREFIX}pages-v4`;
+const ASSET_CACHE = `${CACHE_PREFIX}assets-v4`;
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   OFFLINE_URL,
@@ -16,10 +16,20 @@ const MAX_CACHED_PAGES = 40;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(SHELL_CACHE)
-      .then((cache) => cache.addAll([...APP_SHELL, ...BUILD_ASSETS]))
-      .then(() => self.skipWaiting()),
+    (async () => {
+      const cache = await caches.open(SHELL_CACHE);
+      await cache.addAll(APP_SHELL);
+      await Promise.all(
+        BUILD_ASSETS.map(async (asset) => {
+          try {
+            await cache.add(asset);
+          } catch (error) {
+            console.warn(`No se pudo precargar el recurso opcional ${asset}:`, error);
+          }
+        }),
+      );
+      await self.skipWaiting();
+    })(),
   );
 });
 

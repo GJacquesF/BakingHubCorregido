@@ -35,7 +35,13 @@ const productJsonLd = JSON.stringify({
   <a class="volver-btn" href={localizedPath(locale, '/')} data-i18n="product.backCatalog">← Volver al catálogo</a>
   <h1>{producto.nombre}</h1>
   <img src={imagenUrl} alt={producto.nombre} width="720" height="480" loading="eager" fetchpriority="high" />
-  <p class="detalle-precio" data-i18n="product.price">Precio: {precio(producto.precio)}</p>
+  <p
+    class="detalle-precio"
+    data-i18n="product.price"
+    data-i18n-params={JSON.stringify({ price: precio(producto.precio) })}
+  >
+    Precio: {precio(producto.precio)}
+  </p>
   {producto.stock <= 0 && <p class="existencia agotado" data-i18n="product.outOfStock">Producto agotado por ahora</p>}
   {producto.stock > 0 && producto.stock <= 5 && (
     <p class="existencia pocas" data-i18n="product.fewLeft" data-i18n-params={JSON.stringify({ count: producto.stock })}>

@@ -47,7 +47,9 @@ src/
 ## PWA y prueba sin conexión
 
 `npm run build` crea el service worker y precarga los bundles de CSS/JS, el manifiesto, los
-iconos y la página `offline.html`. Durante el uso guarda imágenes y las páginas públicas del
+iconos y la página `offline.html`. Si un bundle individual no está disponible, se registra el
+aviso y la instalación del worker continúa; los recursos estáticos también se guardan al usarse.
+Durante el uso guarda imágenes y las páginas públicas del
 catálogo y de productos visitadas. Las rutas `/api/`, administración, pagos, pedidos y sesión
 no se guardan en caché.
 
