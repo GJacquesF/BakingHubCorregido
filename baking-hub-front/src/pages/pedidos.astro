@@ -9,7 +9,7 @@ import { localizedMessage, localizedPath, localizedText } from '../lib/i18n';
 import type { Pedido } from '../types';
 
 const nuevo = Astro.url.searchParams.get('nuevo');
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 
 let pedidos: Pedido[] = [];
 let error: string | null = null;

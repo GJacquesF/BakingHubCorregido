@@ -3,7 +3,7 @@ import { totalArticulos } from '../stores/carrito';
 import { localizedPath, localizedText } from '../lib/i18n';
 
 const cantidad = totalArticulos.get();
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const label = localizedText(locale, 'Carrito');
 ---
 

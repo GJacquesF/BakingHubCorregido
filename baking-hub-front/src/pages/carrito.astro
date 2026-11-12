@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import CartView from '../components/CartView';
 import { localizedText } from '../lib/i18n';
 
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 ---
 
 <Layout titulo={localizedText(locale, 'Carrito')} sidebar>

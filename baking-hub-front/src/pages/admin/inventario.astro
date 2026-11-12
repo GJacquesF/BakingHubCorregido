@@ -18,7 +18,7 @@ import { getSupabasePublicUrl } from '../../lib/supabase';
 import type { Producto } from '../../types';
 
 const token = Astro.locals.token;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const avisoKey = Astro.url.searchParams.get('ok') ?? '';
 const aviso = messages[locale].adminNotices.inventory[avisoKey as keyof typeof messages.es.adminNotices.inventory] ?? null;
 const urlInventario = (ok: string) => `${localizedPath(locale, '/admin/inventario')}?ok=${ok}`;

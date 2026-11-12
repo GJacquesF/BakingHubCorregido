@@ -10,7 +10,7 @@ import { CATEGORIAS } from '../lib/categorias';
 import { localizedMessage, localizedPath, localizedText } from '../lib/i18n';
 import type { Producto } from '../types';
 
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const categoriaSolicitada = CATEGORIAS.find((c) => c === Astro.url.searchParams.get('categoria'));
 if (categoriaSolicitada && categoriaSolicitada !== 'Todas') {
   return Astro.redirect(localizedPath(locale, `/categoria/${encodeURIComponent(categoriaSolicitada)}`), 301);

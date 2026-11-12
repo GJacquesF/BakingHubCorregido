@@ -13,7 +13,7 @@ import { localizedMessage, localizedPath, localizedText } from '../../lib/i18n';
 import type { ConfigPagos, Pedido } from '../../types';
 
 const { id } = Astro.params;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 if (!id || !/^\d+$/.test(id)) return Astro.rewrite(localizedPath(locale, '/404'));
 const token = Astro.locals.token;
 

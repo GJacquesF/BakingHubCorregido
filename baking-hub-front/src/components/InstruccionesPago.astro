@@ -12,7 +12,7 @@ const { pedido } = Astro.props;
 const esOxxo = pedido.metodoPago === 'oxxo';
 const esSpei = pedido.metodoPago === 'spei';
 const esBilletera = pedido.metodoPago === 'mercadopago';
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const texto = messages[locale].paymentInstructions;
 // Solo se enlaza a Mercado Pago por https.
 const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;

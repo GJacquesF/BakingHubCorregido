@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { localizedPath, localizedText } from '../lib/i18n';
 Astro.response.status = 404;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 ---
 
 <Layout titulo={localizedText(locale, 'No encontrado')} sidebar>

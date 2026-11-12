@@ -9,7 +9,7 @@ import { localizedMessage, localizedPath, localizedText } from '../../lib/i18n';
 import type { Producto } from '../../types';
 
 const nombreCategoria = decodeURIComponent(Astro.params.categoria ?? '');
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 if (!CATEGORIAS.includes(nombreCategoria as (typeof CATEGORIAS)[number]) || nombreCategoria === 'Todas') {
   return Astro.rewrite(localizedPath(locale, '/404'));
 }

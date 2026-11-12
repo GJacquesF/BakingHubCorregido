@@ -5,7 +5,7 @@ import { localizedPath } from '../lib/i18n';
 import { messages } from '../i18n/messages';
 
 const { usuario } = Astro.locals;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const primerNombre = usuario?.nombre.split(' ')[0];
 const t = messages[locale].header;
 ---

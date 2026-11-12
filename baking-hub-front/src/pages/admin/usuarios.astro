@@ -12,7 +12,7 @@ import { messages } from '../../i18n/messages';
 import type { UsuarioAdmin } from '../../types';
 
 const token = Astro.locals.token;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const avisoKey = Astro.url.searchParams.get('ok') ?? '';
 const aviso = messages[locale].adminNotices.users[avisoKey as keyof typeof messages.es.adminNotices.users] ?? null;
 const busqueda = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 100);

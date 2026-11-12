@@ -10,7 +10,7 @@ import { precio } from '../../lib/format';
 import type { ResumenAdmin } from '../../types';
 
 let resumen: ResumenAdmin | null = null;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 let error: string | null = null;
 try {
   ({ adminResumen: resumen } = await graphql<{ adminResumen: ResumenAdmin }>(ADMIN_RESUMEN, {}, Astro.locals.token));

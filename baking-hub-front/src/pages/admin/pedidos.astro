@@ -11,7 +11,7 @@ import { estadoPedido, formatearFecha } from '../../lib/pagos';
 import type { PedidoAdmin } from '../../types';
 
 const token = Astro.locals.token;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const aviso = Astro.url.searchParams.get('ok') === 'actualizado'
   ? localizedText(locale, 'Estado del pedido actualizado.')
   : null;

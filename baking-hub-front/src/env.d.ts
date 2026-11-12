@@ -28,5 +28,7 @@ declare namespace App {
         usuario: import("./types").Usuario | null;
         /** JWT de la cookie de sesión (null si no hay). */
         token: string | null;
+        /** Idioma asociado a la ruta solicitada, incluidos los rewrites de /en. */
+        locale: import("./i18n/messages").AppLocale;
     }
 }

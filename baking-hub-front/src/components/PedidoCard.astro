@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { pedido, destacado = false } = Astro.props;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const fecha = formatearFecha(pedido.fecha, locale);
 const estado = estadoPedido(pedido.status, locale);
 const metodo = pedido.metodoPago ? metodoPago(pedido.metodoPago, locale) : null;

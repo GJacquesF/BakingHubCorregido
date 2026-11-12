@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { producto } = Astro.props;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const imagenUrl = getSupabasePublicUrl(producto.imagen) ?? producto.imagen;
 const productUrl = new URL(Astro.url.pathname, Astro.url.origin).toString();
 const productJsonLd = JSON.stringify({

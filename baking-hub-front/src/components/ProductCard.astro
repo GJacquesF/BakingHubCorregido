@@ -9,7 +9,7 @@ interface Props extends Producto {
 }
 
 const { id, nombre, precio: valor, imagen, stock, prioridad = false } = Astro.props;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const imagenUrl = getSupabasePublicUrl(imagen) ?? imagen;
 ---
 

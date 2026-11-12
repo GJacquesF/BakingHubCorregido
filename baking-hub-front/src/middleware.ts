@@ -9,15 +9,26 @@ const RUTAS_ADMIN = ['/admin'];
 
 const coincide = (ruta: string, base: string) => ruta === base || ruta.startsWith(`${base}/`);
 
-export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirect }, next) => {
-  if (url.pathname === '/' && cookies.get('baking-hub-locale')?.value === 'en') {
+export const onRequest = defineMiddleware(async ({ cookies, locals, url, originPathname, redirect, rewrite }, next) => {
+  const isEnglishPath = url.pathname === '/en' || url.pathname.startsWith('/en/');
+  const isEnglishOrigin = originPathname === '/en' || originPathname.startsWith('/en/');
+  const isEnglish = isEnglishPath || isEnglishOrigin;
+  const routePath = isEnglishPath ? url.pathname.replace(/^\/en(?=\/|$)/, '') || '/' : url.pathname;
+  const localePrefix = isEnglish ? '/en' : '';
+  locals.locale = isEnglish ? 'en' : 'es';
+
+  if (isEnglishPath) {
+    return rewrite(new URL(`${routePath}${url.search}`, url));
+  }
+
+  if (!isEnglish && url.pathname === '/' && cookies.get('baking-hub-locale')?.value === 'en') {
     return redirect(`/en/${url.search}`, 307);
   }
 
+  const localizedRequestPath = isEnglish
+    ? `/en${routePath === '/' ? '' : routePath}`
+    : routePath;
   const token = cookies.get(COOKIE_SESION)?.value ?? null;
-  const isEnglish = url.pathname === '/en' || url.pathname.startsWith('/en/');
-  const routePath = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
-  const localePrefix = isEnglish ? '/en' : '';
   locals.token = token;
   locals.usuario = null;
   let falloAlValidarSesion = false;
@@ -48,7 +59,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirec
     });
   }
   if (protegida && !locals.usuario) {
-    return redirect(`${localePrefix}/login?next=${encodeURIComponent(url.pathname)}`);
+    return redirect(`${localePrefix}/login?next=${encodeURIComponent(localizedRequestPath)}`);
   }
 
   // El panel de administración es solo para admins (el backend vuelve a comprobarlo en cada operación).

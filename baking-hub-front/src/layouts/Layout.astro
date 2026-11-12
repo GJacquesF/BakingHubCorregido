@@ -19,7 +19,7 @@ interface Props {
 const { titulo, descripcion, imagenSocial, imagenLcp, sidebar = false, categoriaActiva } = Astro.props;
 const title = titulo ? `${titulo} · Baking Hub` : 'Baking Hub';
 const description = descripcion ?? 'Descubre postres artesanales recién horneados en Baking Hub. Elige tus favoritos y recíbelos en tu punto de entrega.';
-const locale = Astro.currentLocale ?? 'es';
+const locale = Astro.locals.locale;
 const defaultPathname = Astro.url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
 const canonicalPathname = locale === 'en'
   ? `/en${defaultPathname === '/' ? '' : defaultPathname}`

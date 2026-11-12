@@ -1,7 +1,7 @@
 ---
 import LoginPage from '../components/LoginPage.astro';
 import { processLogin } from '../lib/auth-pages';
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const result = await processLogin({
   request: Astro.request,
   cookies: Astro.cookies,

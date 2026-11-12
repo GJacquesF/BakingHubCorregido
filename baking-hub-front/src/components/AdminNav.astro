@@ -13,7 +13,7 @@ const enlaces = [
   { clave: 'entregas', path: '/admin/entregas', texto: 'Entregas' },
   { clave: 'usuarios', path: '/admin/usuarios', texto: 'Clientes' },
 ] as const;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 ---
 
 <nav class="admin-nav" aria-label={localizedText(locale, 'Panel de administración')}>

@@ -1,7 +1,7 @@
 ---
 import RegistrationPage from '../components/RegistrationPage.astro';
 import { processRegistration } from '../lib/auth-pages';
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const result = await processRegistration({
   request: Astro.request,
   usuario: Astro.locals.usuario,

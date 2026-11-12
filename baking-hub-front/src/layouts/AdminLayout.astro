@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { titulo, seccion } = Astro.props;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 const titulosEs: Record<Props['seccion'], string> = {
   resumen: 'Resumen',
   pedidos: 'Pedidos',

@@ -9,7 +9,7 @@ import { localizedMessage, localizedText } from '../lib/i18n';
 import type { ConfigPagos, PuntoEntrega } from '../types';
 
 const usuario = Astro.locals.usuario!;
-const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const locale = Astro.locals.locale;
 
 let config: ConfigPagos | null = null;
 let puntos: PuntoEntrega[] = [];
