@@ -140,6 +140,76 @@ button {
     cursor: pointer;
 }
 
+.offline-product-dialog {
+    width: min(460px, calc(100% - 2rem));
+    max-width: 460px;
+    max-height: min(90dvh, 760px);
+    overflow: auto;
+    padding: 1.75rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+}
+
+.offline-product-dialog::backdrop {
+    background: rgba(25, 18, 15, 0.62);
+    backdrop-filter: blur(3px);
+}
+
+.offline-product-dialog-close {
+    display: block;
+    margin: -0.75rem -0.75rem 0.5rem auto;
+    padding: 0.35rem 0.6rem;
+    color: var(--text);
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.offline-product-dialog h2 {
+    color: var(--honey-dark);
+    font-size: 1.8rem;
+    font-style: italic;
+}
+
+.offline-product-dialog img {
+    width: 100%;
+    max-height: 260px;
+    margin: 1.1rem 0;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.offline-product-dialog .offline-product-price {
+    margin: 0 0 1.1rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.offline-product-dialog .offline-product-stock {
+    margin: -0.5rem 0 1.1rem;
+    font-weight: 600;
+}
+
+.offline-product-dialog .offline-product-stock.agotado {
+    color: var(--jam);
+}
+
+.offline-product-dialog .offline-product-stock.pocas {
+    color: var(--honey-dark);
+}
+
+.offline-product-dialog .offline-product-catalog {
+    display: block;
+    margin-top: 0.8rem;
+    color: var(--espresso-soft);
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+}
+
 a {
     color: inherit;
 }

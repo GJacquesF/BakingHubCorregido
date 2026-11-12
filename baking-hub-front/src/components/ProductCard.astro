@@ -32,7 +32,17 @@ const imagenUrl = getSupabasePublicUrl(imagen) ?? imagen;
         ¡Solo quedan {stock}!
       </p>
     )}
-    <a class="ver-detalle-btn" href={localizedPath(locale, `/producto/${id}`)} data-i18n="product.details">Ver detalles</a>
+    <a
+      class="ver-detalle-btn"
+      href={localizedPath(locale, `/producto/${id}`)}
+      data-i18n="product.details"
+      data-offline-product
+      data-product-id={id}
+      data-product-name={nombre}
+      data-product-price={valor}
+      data-product-image={imagenUrl}
+      data-product-stock={stock}
+    >Ver detalles</a>
   </div>
 </article>
 

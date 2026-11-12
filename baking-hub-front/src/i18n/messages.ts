@@ -138,6 +138,7 @@ export const messages = {
       backCatalog: '← Volver al catálogo',
       price: 'Precio: {price}',
       outOfStock: 'Producto agotado por ahora',
+      addedToCart: 'Añadido al carrito',
     },
     home: {
       welcome: 'Bienvenido a Baking Hub',
@@ -183,7 +184,7 @@ export const messages = {
       buscar: 'Buscar',
       limpiar: 'Limpiar',
     },
-    offlineStatus: 'Estás sin conexión. El catálogo y los productos que ya visitaste pueden mostrar contenido guardado.',
+    offlineStatus: 'Estás sin conexión. Puedes abrir los productos que ya estaban cargados en el catálogo.',
     footer: 'Baking Hub © 2026. Proyecto Universitario - Práctica 6-2.',
   },
   en: {
@@ -325,6 +326,7 @@ export const messages = {
       backCatalog: '← Back to catalog',
       price: 'Price: {price}',
       outOfStock: 'Product sold out for now',
+      addedToCart: 'Added to cart',
     },
     home: {
       welcome: 'Welcome to Baking Hub',
@@ -370,7 +372,7 @@ export const messages = {
       buscar: 'Search',
       limpiar: 'Clear',
     },
-    offlineStatus: 'You are offline. Previously visited catalog and product pages may show saved content.',
+    offlineStatus: 'You are offline. You can open products that were already loaded in the catalog.',
     footer: 'Baking Hub © 2026. University project — Practice 6-2.',
   },
 } as const;

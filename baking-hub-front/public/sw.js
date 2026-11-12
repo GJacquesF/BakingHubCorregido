@@ -1,7 +1,8 @@
 const CACHE_PREFIX = 'baking-hub-';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-v6`;
-const PAGE_CACHE = `${CACHE_PREFIX}pages-v5`;
+const PAGE_CACHE = `${CACHE_PREFIX}pages-v6`;
 const ASSET_CACHE = `${CACHE_PREFIX}assets-v5`;
+const CATALOG_CACHE = `${CACHE_PREFIX}catalog-v1`;
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   OFFLINE_URL,
@@ -40,7 +41,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith(CACHE_PREFIX) && ![SHELL_CACHE, PAGE_CACHE, ASSET_CACHE].includes(key))
+            .filter((key) => key.startsWith(CACHE_PREFIX) && ![SHELL_CACHE, PAGE_CACHE, ASSET_CACHE, CATALOG_CACHE].includes(key))
             .map((key) => caches.delete(key)),
         ),
       )
@@ -51,6 +52,16 @@ self.addEventListener('activate', (event) => {
 function isCatalogPage(url) {
   const pathname = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
   return pathname === '/' || pathname.startsWith('/categoria/') || pathname.startsWith('/producto/');
+}
+
+function isCatalogHome(url) {
+  const pathname = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+  return pathname === '/';
+}
+
+function isProductPage(url) {
+  const pathname = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+  return pathname.startsWith('/producto/');
 }
 
 function normalizePathname(pathname) {
@@ -85,6 +96,13 @@ async function storeVisitedPage(request, response) {
   await cache.put(request, response.clone());
   const requests = await cache.keys();
   await Promise.all(requests.slice(0, Math.max(0, requests.length - MAX_CACHED_PAGES)).map((oldRequest) => cache.delete(oldRequest)));
+}
+
+async function storeCatalogHome(request, response) {
+  if (!isCatalogHome(new URL(request.url)) || !isCacheablePublicPage(response)) return;
+
+  const cache = await caches.open(CATALOG_CACHE);
+  await cache.put(request, response.clone());
 }
 
 function isCacheableAsset(request, url) {
@@ -125,10 +143,24 @@ async function networkFirstPage(request) {
   } catch (error) {
     console.info('Sin conexión: intentando cargar la página guardada.', error);
     const pageCache = await caches.open(PAGE_CACHE);
-    const cachedPage = isCatalogPage(new URL(request.url)) ? await findCachedPage(pageCache, request) : null;
+    const requestedUrl = new URL(request.url);
+    const cachedPage = isCatalogPage(requestedUrl) ? await findCachedPage(pageCache, request) : null;
     if (cachedPage) return cachedPage;
-    if (new URL(request.url).pathname === '/') {
-      const cachedEnglishHome = await findCachedPage(pageCache, new Request(new URL('/en/', self.location.origin)));
+    if (isProductPage(requestedUrl)) {
+      const catalogCache = await caches.open(CATALOG_CACHE);
+      const homePath = requestedUrl.pathname.startsWith('/en/') ? '/en/' : '/';
+      const cachedCatalog = await findCachedPage(
+        catalogCache,
+        new Request(new URL(homePath, self.location.origin)),
+      );
+      if (cachedCatalog) return cachedCatalog;
+    }
+    if (requestedUrl.pathname === '/') {
+      const catalogCache = await caches.open(CATALOG_CACHE);
+      const cachedEnglishHome = await findCachedPage(
+        catalogCache,
+        new Request(new URL('/en/', self.location.origin)),
+      );
       if (cachedEnglishHome) return cachedEnglishHome;
     }
 
@@ -144,6 +176,11 @@ async function networkFirstPage(request) {
       await storeVisitedPage(request, response);
     } catch (error) {
       console.error('No se pudo guardar la página del catálogo:', error);
+    }
+    try {
+      await storeCatalogHome(request, response);
+    } catch (error) {
+      console.error('No se pudo guardar el catálogo para abrir productos sin conexión:', error);
     }
   }
   return response;
