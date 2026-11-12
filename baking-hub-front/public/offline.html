@@ -66,7 +66,52 @@
       <h1>Sin conexión</h1>
       <p>Esta página todavía no se ha guardado. Conéctate a internet para abrirla; el catálogo y los productos que ya visitaste pueden seguir disponibles sin conexión.</p>
       <p lang="en"><strong>You are offline.</strong> This page has not been saved yet. Reconnect to open it. Previously visited catalog and product pages may still be available.</p>
-      <a href="/">Volver al catálogo / Back to catalog</a>
+      <a id="catalog-link" href="/">Volver al catálogo / Back to catalog</a>
+      <p id="offline-status" role="status" hidden></p>
     </main>
+    <script>
+      const normalizePath = (pathname) => pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+      const isCatalogPath = (pathname) =>
+        pathname === '/' || pathname === '/en' ||
+        /^\/(?:en\/)?(?:categoria|producto)\//.test(pathname);
+
+      document.getElementById('catalog-link').addEventListener('click', async (event) => {
+        event.preventDefault();
+        const status = document.getElementById('offline-status');
+
+        try {
+          const cacheNames = (await caches.keys()).filter((name) => name.startsWith('baking-hub-pages-'));
+          const cachedRequests = (await Promise.all(
+            cacheNames.map(async (name) => (await caches.open(name)).keys()),
+          )).flat();
+          const cachedPages = cachedRequests.filter((request) => {
+            const url = new URL(request.url);
+            return url.origin === location.origin && isCatalogPath(normalizePath(url.pathname));
+          });
+          const currentPath = normalizePath(location.pathname);
+          const languagePrefix = currentPath === '/en' || currentPath.startsWith('/en/') ? '/en' : '';
+          const candidates = [
+            cachedPages.find((request) => normalizePath(new URL(request.url).pathname) === currentPath),
+            cachedPages.find((request) => normalizePath(new URL(request.url).pathname) === `${languagePrefix || ''}/` || normalizePath(new URL(request.url).pathname) === (languagePrefix || '/')),
+            ...cachedPages.filter((request) => new URL(request.url).pathname.startsWith(`${languagePrefix}/categoria/`)).reverse(),
+            cachedPages.find((request) => normalizePath(new URL(request.url).pathname) === (languagePrefix ? '/' : '/en')),
+            ...cachedPages.filter((request) => new URL(request.url).pathname.includes('/categoria/')).reverse(),
+            ...cachedPages.filter((request) => new URL(request.url).pathname.includes('/producto/')).reverse(),
+          ];
+          const destination = candidates.find(Boolean);
+
+          if (destination) {
+            location.assign(destination.url);
+          } else {
+            status.hidden = false;
+            status.textContent = 'Aún no hay páginas del catálogo guardadas. Conéctate y visita el catálogo para guardarlo.';
+          }
+        } catch (error) {
+          console.error('No se pudo encontrar el catálogo guardado:', error);
+          status.hidden = false;
+          status.textContent = 'No se pudo abrir el catálogo guardado. Intenta de nuevo cuando tengas conexión.';
+        }
+      });
+    </script>
   </body>
 </html>

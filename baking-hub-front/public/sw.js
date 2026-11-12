@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'baking-hub-';
-const SHELL_CACHE = `${CACHE_PREFIX}shell-v5`;
+const SHELL_CACHE = `${CACHE_PREFIX}shell-v6`;
 const PAGE_CACHE = `${CACHE_PREFIX}pages-v5`;
 const ASSET_CACHE = `${CACHE_PREFIX}assets-v5`;
 const OFFLINE_URL = '/offline.html';
@@ -51,6 +51,25 @@ self.addEventListener('activate', (event) => {
 function isCatalogPage(url) {
   const pathname = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
   return pathname === '/' || pathname.startsWith('/categoria/') || pathname.startsWith('/producto/');
+}
+
+function normalizePathname(pathname) {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+}
+
+async function findCachedPage(cache, request) {
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  const requestedUrl = new URL(request.url);
+  const requestedPath = normalizePathname(requestedUrl.pathname);
+  const matchingRequest = (await cache.keys()).find((cachedRequest) => {
+    const cachedUrl = new URL(cachedRequest.url);
+    return cachedUrl.origin === requestedUrl.origin &&
+      normalizePathname(cachedUrl.pathname) === requestedPath;
+  });
+
+  return matchingRequest ? cache.match(matchingRequest) : undefined;
 }
 
 function isCacheablePublicPage(response) {
@@ -106,10 +125,10 @@ async function networkFirstPage(request) {
   } catch (error) {
     console.info('Sin conexión: intentando cargar la página guardada.', error);
     const pageCache = await caches.open(PAGE_CACHE);
-    const cachedPage = isCatalogPage(new URL(request.url)) ? await pageCache.match(request) : null;
+    const cachedPage = isCatalogPage(new URL(request.url)) ? await findCachedPage(pageCache, request) : null;
     if (cachedPage) return cachedPage;
     if (new URL(request.url).pathname === '/') {
-      const cachedEnglishHome = await pageCache.match(new URL('/en', self.location.origin));
+      const cachedEnglishHome = await findCachedPage(pageCache, new Request(new URL('/en/', self.location.origin)));
       if (cachedEnglishHome) return cachedEnglishHome;
     }
 
