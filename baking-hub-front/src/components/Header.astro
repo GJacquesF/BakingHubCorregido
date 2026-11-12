@@ -1,11 +1,14 @@
 ---
 import CartButton from './CartButton.astro';
+import InstallPWAButton from './InstallPWAButton';
+import { localizedPath } from '../lib/i18n';
 
 const { usuario } = Astro.locals;
-const locale = Astro.currentLocale ?? 'es';
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const primerNombre = usuario?.nombre.split(' ')[0];
 const strings = {
   es: {
+    nav: 'Cuenta y carrito',
     admin: 'Panel admin',
     pedidos: 'Mis pedidos',
     hola: 'Hola',
@@ -17,6 +20,7 @@ const strings = {
     dark: 'Oscuro',
   },
   en: {
+    nav: 'Account and cart',
     admin: 'Admin panel',
     pedidos: 'My orders',
     hola: 'Hi',
@@ -28,41 +32,42 @@ const strings = {
     dark: 'Dark',
   },
 };
-const t = strings[locale] ?? strings.es;
+const t = strings[locale];
 ---
 
 <header class="top-bar">
-  <a class="brand" href="/">Baking Hub</a>
+  <a class="brand" href={localizedPath(locale, '/')}>Baking Hub</a>
 
-  <nav class="acciones" aria-label="Cuenta y carrito">
+  <nav class="acciones" aria-label={t.nav}>
     {
       usuario ? (
         <>
-          {usuario.rol === 'admin' && <a class="enlace enlace-admin" href="/admin" data-i18n="header.admin">{t.admin}</a>}
-          <a class="enlace" href="/pedidos" data-i18n="header.pedidos">{t.pedidos}</a>
+          {usuario.rol === 'admin' && <a class="enlace enlace-admin" href={localizedPath(locale, '/admin')} data-i18n="header.admin">{t.admin}</a>}
+          <a class="enlace" href={localizedPath(locale, '/pedidos')} data-i18n="header.pedidos">{t.pedidos}</a>
           <span class="saludo" data-i18n="header.hola" data-i18n-name={primerNombre}>{t.hola}, {primerNombre}</span>
-          <form method="POST" action="/api/auth/logout">
+          <form method="POST" action={`/api/auth/logout?locale=${locale}`}>
             <button class="enlace enlace-btn" type="submit" data-i18n="header.salir">{t.salir}</button>
           </form>
         </>
       ) : (
         <>
-          <a class="enlace" href="/login" data-i18n="header.ingresar">{t.ingresar}</a>
-          <a class="enlace" href="/registro" data-i18n="header.registro">{t.registro}</a>
+          <a class="enlace" href={localizedPath(locale, '/login')} data-i18n="header.ingresar">{t.ingresar}</a>
+          <a class="enlace" href={localizedPath(locale, '/registro')} data-i18n="header.registro">{t.registro}</a>
         </>
       )
     }
     <label class="locale-picker" aria-label={t.idioma}>
       <span class="sr-only" data-i18n="header.idioma">{t.idioma}</span>
       <select data-locale-switch aria-label={t.idioma}>
-        <option value="es">ES</option>
-        <option value="en">EN</option>
+        <option value="es" selected={locale === 'es'}>ES</option>
+        <option value="en" selected={locale === 'en'}>EN</option>
       </select>
     </label>
     <button class="theme-toggle" type="button" data-theme-toggle aria-label={t.theme} aria-pressed="false" title={t.theme}>
       <span data-i18n="header.dark">{t.dark}</span>
       <span class="theme-switch" aria-hidden="true"><span></span></span>
     </button>
+    <InstallPWAButton client:load />
     <CartButton />
   </nav>
 </header>

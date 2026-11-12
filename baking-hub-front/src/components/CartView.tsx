@@ -7,6 +7,7 @@ export default function CartView() {
     const items = useStore(carrito);
     const total = useStore(totalPrecio);
     const locale = document.documentElement.dataset.locale === "en" ? "en" : "es";
+    const localePath = (path: string) => `${locale === "en" ? "/en" : ""}${path === "/" ? "" : path}`;
     const strings = {
         es: {
             empty: "Aún no has agregado nada delicioso.",
@@ -34,7 +35,7 @@ export default function CartView() {
     if (items.length === 0) {
         return (
             <p className="estado-vacio">
-                {t.empty} <a href="/">{t.viewCatalog}</a>
+                {t.empty} <a href={localePath("/")}>{t.viewCatalog}</a>
             </p>
         );
     }
@@ -74,7 +75,7 @@ export default function CartView() {
             <p className="carrito-total">
                 {t.total}: <strong>{precio(total)}</strong>
             </p>
-            <a className="checkout-btn" href="/checkout">
+            <a className="checkout-btn" href={localePath("/checkout")}>
                 {t.checkout}
             </a>
         </>

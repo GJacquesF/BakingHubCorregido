@@ -19,10 +19,13 @@ const { titulo, descripcion, imagenSocial, imagenLcp, sidebar = false, categoria
 const title = titulo ? `${titulo} · Baking Hub` : 'Baking Hub';
 const description = descripcion ?? 'Descubre postres artesanales recién horneados en Baking Hub. Elige tus favoritos y recíbelos en tu punto de entrega.';
 const locale = Astro.currentLocale ?? 'es';
-const canonical = new URL(Astro.url.pathname, Astro.url.origin);
-const localePathname = Astro.url.pathname === '/' ? '/' : Astro.url.pathname;
-const alternateEs = new URL(localePathname.replace(/^\/en(?=\/|$)/, ''), Astro.url.origin);
-const alternateEn = new URL(localePathname === '/' ? '/en' : `/en${localePathname}`, Astro.url.origin);
+const defaultPathname = Astro.url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+const canonicalPathname = locale === 'en'
+  ? `/en${defaultPathname === '/' ? '' : defaultPathname}`
+  : defaultPathname;
+const canonical = new URL(canonicalPathname, Astro.url.origin);
+const alternateEs = new URL(defaultPathname, Astro.url.origin);
+const alternateEn = new URL(`/en${defaultPathname === '/' ? '' : defaultPathname}`, Astro.url.origin);
 const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new URL('/favicon.svg', Astro.url.origin);
 ---
 
@@ -30,13 +33,15 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
 <html lang={locale} data-locale={locale}>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#dca17d" />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="es" href={alternateEs.href} />
     <link rel="alternate" hreflang="en" href={alternateEn.href} />
+    <link rel="alternate" hreflang="x-default" href={alternateEs.href} />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Baking Hub" />
     <meta property="og:title" content={title} />
@@ -48,6 +53,18 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
     <meta name="twitter:description" content={description} />
     {imagenLcp && <link rel="preload" as="image" href={imagenLcp} fetchpriority="high" />}
     <script is:inline>
+      let redirectingToEnglish = false;
+      try {
+        redirectingToEnglish = location.pathname === '/' && localStorage.getItem('baking-hub-locale') === 'en';
+      } catch {}
+      if (redirectingToEnglish) location.replace(`/en/${location.search}${location.hash}`);
+
+      const currentLocale = redirectingToEnglish || document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
+      try {
+        localStorage.setItem('baking-hub-locale', currentLocale);
+      } catch {}
+      document.cookie = `baking-hub-locale=${currentLocale}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+
       const applyStoredTheme = (theme) => {
         document.documentElement.dataset.theme = theme;
         document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
@@ -269,30 +286,20 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         document.querySelectorAll('[data-i18n]').forEach(applyTranslation);
       };
 
-      const getStoredLocale = () => {
-        try {
-          const saved = localStorage.getItem('baking-hub-locale');
-          if (saved === 'es' || saved === 'en') return saved;
-        } catch {}
-
-        const browserLanguage = navigator.language || 'es';
-        return browserLanguage.toLowerCase().startsWith('en') ? 'en' : 'es';
+      const updateOfflineStatus = () => {
+        const offlineStatus = document.getElementById('offline-status');
+        if (!offlineStatus) return;
+        offlineStatus.hidden = navigator.onLine;
+        offlineStatus.textContent = document.documentElement.dataset.locale === 'en'
+          ? 'You are offline. Previously visited catalog and product pages may show saved content.'
+          : 'Estás sin conexión. El catálogo y los productos que ya visitaste pueden mostrar contenido guardado.';
       };
-
-      const applyLocale = (locale) => {
-        const nextLocale = locale === 'en' ? 'en' : 'es';
-        document.documentElement.lang = nextLocale;
-        document.documentElement.dataset.locale = nextLocale;
-        document.querySelectorAll('[data-locale-switch]').forEach((select) => {
-          select.value = nextLocale;
-        });
-        try {
-          localStorage.setItem('baking-hub-locale', nextLocale);
-        } catch {}
+      window.addEventListener('online', updateOfflineStatus);
+      window.addEventListener('offline', updateOfflineStatus);
+      document.addEventListener('DOMContentLoaded', () => {
         applyTranslations();
-      };
-
-      applyLocale(getStoredLocale());
+        updateOfflineStatus();
+      });
 
       document.addEventListener('change', (event) => {
         const target = event.target instanceof Element ? event.target : null;
@@ -300,20 +307,24 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
         if (!select) return;
 
         const nextLocale = select.value === 'en' ? 'en' : 'es';
-        applyLocale(nextLocale);
-      });
-
-      window.addEventListener('storage', (event) => {
-        if (event.key === 'baking-hub-locale') {
-          applyLocale(getStoredLocale());
-        }
+        try {
+          localStorage.setItem('baking-hub-locale', nextLocale);
+        } catch {}
+        document.cookie = `baking-hub-locale=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+        const defaultPath = location.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+        const localizedPath = nextLocale === 'en'
+          ? `/en${defaultPath === '/' ? '' : defaultPath}`
+          : defaultPath;
+        location.assign(`${localizedPath}${location.search}${location.hash}`);
       });
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+          const isSecure = location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
           if (!isSecure) return;
-          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error) => {
+            console.error('No se pudo registrar el service worker de Baking Hub:', error);
+          });
         });
       }
     </script>
@@ -327,6 +338,7 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
     <title>{title}</title>
   </head>
   <body>
+    <p id="offline-status" class="offline-status" role="status" aria-live="polite" hidden></p>
     {Astro.locals.usuario?.rol === 'cliente' && <PresenciaUsuario client:load />}
     <div class="layout-principal">
       <Header />
@@ -345,8 +357,19 @@ const socialImage = imagenSocial ? new URL(imagenSocial, Astro.url.origin) : new
   .layout-principal {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100dvh;
     background: radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 38%);
+  }
+
+  .offline-status {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin: 0;
+    padding: 0.65rem 1rem;
+    background: var(--warning-surface);
+    color: var(--warning-text);
+    text-align: center;
   }
 
   .contenedor-central {

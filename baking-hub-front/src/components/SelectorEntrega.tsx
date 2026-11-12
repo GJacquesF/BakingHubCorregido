@@ -7,12 +7,13 @@ import '../styles/entregas.css';
 interface Props {
   puntos: PuntoEntrega[];
   seleccionadoId: string | null;
+  locale: 'es' | 'en';
   deshabilitado?: boolean;
   onChange: (id: string) => void;
 }
 
 /** Mapa + lista para que el cliente elija dónde quiere recibir su pedido. */
-export default function SelectorEntrega({ puntos, seleccionadoId, deshabilitado = false, onChange }: Props) {
+export default function SelectorEntrega({ puntos, seleccionadoId, locale, deshabilitado = false, onChange }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
   const capaRef = useRef<L.LayerGroup | null>(null);
@@ -85,7 +86,7 @@ export default function SelectorEntrega({ puntos, seleccionadoId, deshabilitado 
   const usarMiUbicacion = () => {
     setErrorUbicacion(null);
     if (!('geolocation' in navigator)) {
-      setErrorUbicacion('Tu navegador no permite obtener la ubicación.');
+      setErrorUbicacion(locale === 'en' ? 'Your browser does not support location access.' : 'Tu navegador no permite obtener la ubicación.');
       return;
     }
     setBuscando(true);
@@ -105,7 +106,9 @@ export default function SelectorEntrega({ puntos, seleccionadoId, deshabilitado 
       },
       () => {
         setBuscando(false);
-        setErrorUbicacion('No pudimos obtener tu ubicación. Revisa el permiso del navegador o elige un punto en el mapa.');
+        setErrorUbicacion(locale === 'en'
+          ? 'We could not get your location. Check your browser permissions or choose a point on the map.'
+          : 'No pudimos obtener tu ubicación. Revisa el permiso del navegador o elige un punto en el mapa.');
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
     );
@@ -113,18 +116,27 @@ export default function SelectorEntrega({ puntos, seleccionadoId, deshabilitado 
 
   return (
     <fieldset className="entrega" disabled={deshabilitado}>
-      <legend className="entrega-titulo">¿Dónde quieres recibir tu pedido?</legend>
+      <legend className="entrega-titulo">
+        {locale === 'en' ? 'Where would you like to receive your order?' : '¿Dónde quieres recibir tu pedido?'}
+      </legend>
 
-      <div className="entrega-mapa" ref={contenedor} role="application" aria-label="Mapa de puntos de entrega" />
+      <div
+        className="entrega-mapa"
+        ref={contenedor}
+        role="application"
+        aria-label={locale === 'en' ? 'Delivery location map' : 'Mapa de puntos de entrega'}
+      />
 
       <div className="entrega-barra">
         <button type="button" className="entrega-ubicacion" onClick={usarMiUbicacion} disabled={buscando}>
-          {buscando ? 'Buscando…' : '📍 Ordenar por cercanía'}
+          {buscando
+            ? locale === 'en' ? 'Searching…' : 'Buscando…'
+            : locale === 'en' ? '📍 Sort by distance' : '📍 Ordenar por cercanía'}
         </button>
         {errorUbicacion && <span className="entrega-error" role="alert">{errorUbicacion}</span>}
       </div>
 
-      <ul className="entrega-lista" role="radiogroup" aria-label="Puntos de entrega">
+      <ul className="entrega-lista" role="radiogroup" aria-label={locale === 'en' ? 'Delivery locations' : 'Puntos de entrega'}>
         {ordenados.map(({ punto, km }) => {
           const marcado = punto.id === seleccionadoId;
           return (
@@ -150,7 +162,7 @@ export default function SelectorEntrega({ puntos, seleccionadoId, deshabilitado 
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Ver
+                  {locale === 'en' ? 'View' : 'Ver'}
                 </a>
               </label>
             </li>

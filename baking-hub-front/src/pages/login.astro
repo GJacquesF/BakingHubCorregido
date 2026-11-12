@@ -7,9 +7,11 @@ import GoogleSignIn from '../components/GoogleSignIn';
 import { graphql, ApiError } from '../lib/graphql';
 import { LOGIN } from '../lib/queries';
 import { guardarSesion, rutaSegura } from '../lib/auth';
+import { localizedPath } from '../lib/i18n';
 
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const next = rutaSegura(Astro.url.searchParams.get('next'));
-if (Astro.locals.usuario) return Astro.redirect(next);
+if (Astro.locals.usuario) return Astro.redirect(localizedPath(locale, next));
 
 let error: string | null = null;
 let email = '';
@@ -20,24 +22,27 @@ if (Astro.request.method === 'POST') {
   const password = String(datos.get('password') ?? '');
   const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
   const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
-  const humanCheck = String(datos.get('turnstile-human') ?? '') === 'on';
 
   if (turnstileEnabled && !turnstileToken) {
-    error = 'Completa la verificación de seguridad antes de iniciar sesión.';
-  } else if (!turnstileEnabled && !humanCheck) {
-    error = 'Marca la casilla para confirmar que eres humano.';
+    error = locale === 'en'
+      ? 'Complete the security check before signing in.'
+      : 'Completa la verificación de seguridad antes de iniciar sesión.';
   } else {
     try {
       const { login } = await graphql<{ login: { token: string } }>(LOGIN, {
         email,
         password,
-        turnstileToken: turnstileEnabled ? turnstileToken : humanCheck ? 'manual-human-check' : null,
+        turnstileToken: turnstileEnabled ? turnstileToken : null,
       });
       guardarSesion(Astro.cookies, login.token);
-      return Astro.redirect(next, 303);
+      return Astro.redirect(localizedPath(locale, next), 303);
     } catch (e) {
       const esDeUsuario = e instanceof ApiError && ['UNAUTHENTICATED', 'BAD_USER_INPUT'].includes(e.codigo);
-      error = esDeUsuario ? e.message : 'No pudimos iniciar sesión. Inténtalo de nuevo en un momento.';
+      error = esDeUsuario
+        ? e.message
+        : locale === 'en'
+          ? 'We could not sign you in. Please try again in a moment.'
+          : 'No pudimos iniciar sesión. Inténtalo de nuevo en un momento.';
     }
   }
 }
@@ -65,19 +70,14 @@ if (Astro.request.method === 'POST') {
             data-size="normal"
           />
         </div>
-      ) : (
-        <label class="human-check">
-          <input type="checkbox" name="turnstile-human" />
-          <span data-i18n="auth.human">Confirmo que soy humano</span>
-        </label>
-      )}
+      ) : null}
       <button class="btn-primario" type="submit" data-i18n="auth.submitLogin">Ingresar</button>
     </form>
-    <p class="separador-auth">O continúa con</p>
-    <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} />
+    <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
+    <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} locale={locale} />
     <Fragment slot="pie">
       <span data-i18n="auth.noAccount">¿No tienes cuenta?</span>{' '}
-      <a href={`/registro${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.createAccount">Crear cuenta</a>
+      <a href={`${localizedPath(locale, '/registro')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.createAccount">Crear cuenta</a>
     </Fragment>
   </AuthCard>
 </Layout>
@@ -95,22 +95,4 @@ if (Astro.request.method === 'POST') {
     margin: 1rem 0 0.5rem;
   }
 
-  .human-check {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin: 1rem 0 0.85rem;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--espresso-soft);
-    font-size: 0.95rem;
-  }
-
-  .human-check input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--melon);
-  }
 </style>

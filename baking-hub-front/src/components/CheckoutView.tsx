@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { carrito, totalArticulos, totalPrecio, vaciar } from '../stores/carrito';
 import { precio } from '../lib/format';
-import { METODOS } from '../lib/pagos';
+import { metodoPago } from '../lib/pagos';
 import { tokenizarTarjeta, type DatosTarjeta } from '../lib/mercadopago-cliente';
 import type { ErroresTarjeta } from '../lib/tarjeta';
 import type { ConfigPagos, MetodoPago, PuntoEntrega, TarjetaTokenizada } from '../types';
@@ -17,14 +17,85 @@ interface Props {
   /** Puntos de entrega activos (si no hay ninguno, el checkout no pide dirección). */
   puntos: PuntoEntrega[];
   usuario: { nombre: string; email: string };
+  locale: 'es' | 'en';
 }
 
 const TARJETA_VACIA: DatosTarjeta = { numero: '', titular: '', vencimiento: '', cvv: '' };
 
-export default function CheckoutView({ config, puntos, usuario }: Props) {
+export default function CheckoutView({ config, puntos, usuario, locale }: Props) {
   const items = useStore(carrito);
   const articulos = useStore(totalArticulos);
   const total = useStore(totalPrecio);
+  const localizedPath = (path: string) => `${locale === 'en' ? '/en' : ''}${path === '/' ? '' : path}`;
+  const t = locale === 'en'
+    ? {
+        empty: 'Your cart is empty.',
+        catalog: 'View catalog',
+        deliveryRequired: 'Choose a delivery location on the map.',
+        cardholderRequired: 'Enter the name as it appears on the card.',
+        paymentError: 'There was an error processing the payment. Please try again.',
+        processing: 'Processing…',
+        oxxo: 'Generate payment slip',
+        spei: 'Generate transfer details',
+        continueMercadoPago: 'Continue to Mercado Pago',
+        pay: 'Pay',
+        paymentMethod: 'Payment method',
+        testMode: 'Test mode.',
+        noRealCharge: 'No real charge will be made.',
+        cardInstructions: 'When you continue, we will generate a payment slip with a reference.',
+        oxxoStep1: 'Take it to any OXXO store (you can show it on your phone).',
+        oxxoStep2: 'Pay the exact amount at the checkout.',
+        paymentConfirmed: 'Your order will be confirmed once the payment is credited.',
+        expiresOxxo: 'You have',
+        expiresOxxoEnd: 'hours to pay. After that, the order is canceled and the items return to inventory.',
+        speiInstructions: 'When you continue, we will show you an interbank CLABE and the exact amount.',
+        speiStep1: 'Open your bank app or online banking.',
+        speiStep2: 'Make a SPEI transfer to that CLABE for the indicated amount.',
+        expiresSpei: 'hours to make the transfer.',
+        mercadoPago: 'We will take you to Mercado Pago to complete payment securely with your account, then bring you back here.',
+        payer: 'Paying as',
+        cancel: 'Cancel and go back',
+        security: 'Mercado Pago processes your payment. Baking Hub does not store your card details.',
+        orderSummary: 'Order summary',
+        yourOrder: 'Your order',
+        articles: 'Items',
+        total: 'Total due',
+        delivery: 'Delivery to',
+      }
+    : {
+        empty: 'Tu carrito está vacío.',
+        catalog: 'Ver el catálogo',
+        deliveryRequired: 'Elige en el mapa dónde quieres recibir tu pedido.',
+        cardholderRequired: 'Escribe el nombre como aparece en la tarjeta.',
+        paymentError: 'Hubo un error al procesar el pago. Inténtalo de nuevo.',
+        processing: 'Procesando…',
+        oxxo: 'Generar ficha de pago',
+        spei: 'Generar datos de transferencia',
+        continueMercadoPago: 'Continuar a Mercado Pago',
+        pay: 'Pagar',
+        paymentMethod: 'Método de pago',
+        testMode: 'Modo de pruebas.',
+        noRealCharge: 'No se hará ningún cobro real.',
+        cardInstructions: 'Al continuar generaremos una ficha con una referencia de pago.',
+        oxxoStep1: 'Llévala a cualquier tienda OXXO (puedes mostrarla desde tu celular).',
+        oxxoStep2: 'Paga el monto exacto en caja.',
+        paymentConfirmed: 'Tu pedido se confirma en cuanto se acredite el pago.',
+        expiresOxxo: 'Tienes',
+        expiresOxxoEnd: 'horas para pagar; después el pedido se cancela y las piezas vuelven al inventario.',
+        speiInstructions: 'Al continuar te mostraremos una CLABE interbancaria y el monto exacto.',
+        speiStep1: 'Abre la app o la banca en línea de tu banco.',
+        speiStep2: 'Haz una transferencia SPEI a esa CLABE por el monto indicado.',
+        expiresSpei: 'horas para transferir.',
+        mercadoPago: 'Te llevaremos a Mercado Pago para que completes el pago de forma segura con tu cuenta, y regresarás aquí al terminar.',
+        payer: 'Pagas como',
+        cancel: 'Cancelar y regresar',
+        security: 'Mercado Pago procesa el pago. Baking Hub no almacena los datos de tu tarjeta.',
+        orderSummary: 'Resumen de tu orden',
+        yourOrder: 'Tu orden',
+        articles: 'Artículos',
+        total: 'Total a pagar',
+        delivery: 'Entrega en',
+      };
 
   const [metodo, setMetodo] = useState<MetodoPago>(config.metodos[0] ?? 'tarjeta');
   const [tarjeta, setTarjeta] = useState<DatosTarjeta>(TARJETA_VACIA);
@@ -36,7 +107,7 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
   if (items.length === 0) {
     return (
       <p className="estado-vacio">
-        Tu carrito está vacío. <a href="/">Ver el catálogo</a>
+        {t.empty} <a href={localizedPath('/')}>{t.catalog}</a>
       </p>
     );
   }
@@ -44,7 +115,7 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
   const manejarPago = async () => {
     setError(null);
     if (puntos.length > 0 && !puntoId) {
-      setError('Elige en el mapa dónde quieres recibir tu pedido.');
+      setError(t.deliveryRequired);
       document.getElementById('seccion-entrega')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -52,7 +123,7 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
 
     if (metodo === 'tarjeta' && config.modo === 'real') {
       const errores: ErroresTarjeta = tarjeta.titular.trim().length < 3
-        ? { titular: 'Escribe el nombre como aparece en la tarjeta.' }
+        ? { titular: t.cardholderRequired }
         : {};
       setErroresTarjeta(errores);
       if (Object.keys(errores).length > 0) return;
@@ -72,12 +143,12 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
       });
 
       if (res.status === 401) {
-        window.location.assign('/login?next=/checkout');
+        window.location.assign(`${localizedPath('/login')}?next=${encodeURIComponent(localizedPath('/checkout'))}`);
         return;
       }
 
       const datos = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(datos.error ?? 'Hubo un error al procesar el pago.');
+      if (!res.ok) throw new Error(datos.error ?? t.paymentError);
 
       vaciar();
       const { id, pagoUrl } = datos.pedido as { id: string; pagoUrl: string | null };
@@ -87,9 +158,9 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
         return;
       }
 
-      window.location.assign(`/pedidos/${id}?nuevo=1`);
+      window.location.assign(`${localizedPath('/pedidos')}/${id}?nuevo=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Hubo un error al procesar el pago. Inténtalo de nuevo.');
+      setError(e instanceof Error ? e.message : t.paymentError);
       setPagando(false);
     }
   };
@@ -97,36 +168,37 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
   const puntoSeleccionado = puntos.find((p) => p.id === puntoId) ?? null;
 
   const textoBoton = pagando
-    ? 'Procesando…'
+    ? t.processing
     : metodo === 'oxxo'
-      ? `Generar ficha de pago · ${precio(total)}`
+      ? `${t.oxxo} · ${precio(total)}`
       : metodo === 'spei'
-        ? `Generar datos de transferencia · ${precio(total)}`
+        ? `${t.spei} · ${precio(total)}`
         : metodo === 'mercadopago'
-          ? `Continuar a Mercado Pago · ${precio(total)}`
-          : `Pagar ${precio(total)}`;
+          ? `${t.continueMercadoPago} · ${precio(total)}`
+          : `${t.pay} ${precio(total)}`;
 
   return (
     <div className="checkout-grid">
-      <section className="checkout-main" aria-label="Método de pago">
+      <section className="checkout-main" aria-label={t.paymentMethod}>
         {config.modo === 'simulado' && (
           <p className="aviso-simulado" role="note">
-            <strong>Modo de pruebas.</strong> No se hará ningún cobro real.
+            <strong>{t.testMode}</strong> {t.noRealCharge}
           </p>
         )}
 
         {puntos.length > 0 && (
           <div id="seccion-entrega">
-            <SelectorEntrega puntos={puntos} seleccionadoId={puntoId} deshabilitado={pagando} onChange={setPuntoId} />
+            <SelectorEntrega puntos={puntos} seleccionadoId={puntoId} locale={locale} deshabilitado={pagando} onChange={setPuntoId} />
           </div>
         )}
 
-        <MetodosPago metodos={config.metodos} seleccionado={metodo} deshabilitado={pagando} onChange={setMetodo} />
+        <MetodosPago metodos={config.metodos} seleccionado={metodo} locale={locale} deshabilitado={pagando} onChange={setMetodo} />
 
         <div className="metodo-detalle">
           {metodo === 'tarjeta' && (
             <FormularioTarjeta
               modo={config.modo}
+              locale={locale}
               valores={tarjeta}
               errores={erroresTarjeta}
               deshabilitado={pagando}
@@ -136,43 +208,39 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
 
           {metodo === 'oxxo' && (
             <div className="instrucciones">
-              <p>Al continuar generaremos una <strong>ficha con una referencia de pago</strong>.</p>
+              <p>{t.cardInstructions}</p>
               <ol>
-                <li>Llévala a cualquier tienda OXXO (puedes mostrarla desde tu celular).</li>
-                <li>Paga el monto exacto en caja.</li>
-                <li>Tu pedido se confirma en cuanto se acredite el pago.</li>
+                <li>{t.oxxoStep1}</li>
+                <li>{t.oxxoStep2}</li>
+                <li>{t.paymentConfirmed}</li>
               </ol>
               <p className="nota">
-                Tienes <strong>{config.horasParaPagar} horas</strong> para pagar; después el pedido se cancela y las piezas
-                vuelven al inventario.
+                {t.expiresOxxo} <strong>{config.horasParaPagar} {locale === 'en' ? 'hours' : 'horas'}</strong> {t.expiresOxxoEnd}
               </p>
             </div>
           )}
 
           {metodo === 'spei' && (
             <div className="instrucciones">
-              <p>Al continuar te mostraremos una <strong>CLABE interbancaria</strong> y el monto exacto.</p>
+              <p>{t.speiInstructions}</p>
               <ol>
-                <li>Abre la app o la banca en línea de tu banco.</li>
-                <li>Haz una transferencia SPEI a esa CLABE por el monto indicado.</li>
-                <li>Tu pedido se confirma en cuanto se acredite la transferencia.</li>
+                <li>{t.speiStep1}</li>
+                <li>{t.speiStep2}</li>
+                <li>{t.paymentConfirmed}</li>
               </ol>
-              <p className="nota">Tienes <strong>{config.horasParaPagar} horas</strong> para transferir.</p>
+              <p className="nota">{t.expiresOxxo} <strong>{config.horasParaPagar} {locale === 'en' ? 'hours' : 'horas'}</strong> {t.expiresSpei}</p>
             </div>
           )}
 
           {metodo === 'mercadopago' && (
             <div className="instrucciones">
-              <p>
-                Te llevaremos a <strong>Mercado Pago</strong> para que completes el pago de forma segura con tu cuenta, y
-                regresarás aquí al terminar.
-              </p>
+              <p>{t.mercadoPago}</p>
             </div>
           )}
         </div>
 
         <p className="pagador">
-          Pagas como <strong>{usuario.nombre}</strong> ({usuario.email})
+          {t.payer} <strong>{usuario.nombre}</strong> ({usuario.email})
         </p>
 
         {error && (
@@ -184,14 +252,12 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
         <button className={`pagar-btn ${pagando ? 'procesando' : 'activo'}`} onClick={manejarPago} disabled={pagando}>
           {textoBoton}
         </button>
-        <a className="cancelar-btn" href="/carrito">
-          Cancelar y regresar
-        </a>
-        <p className="seguridad">Mercado Pago procesa el pago. Baking Hub no almacena los datos de tu tarjeta.</p>
+        <a className="cancelar-btn" href={localizedPath('/carrito')}>{t.cancel}</a>
+        <p className="seguridad">{t.security}</p>
       </section>
 
-      <aside className="checkout-resumen" aria-label="Resumen de tu orden">
-        <h3>Tu orden</h3>
+      <aside className="checkout-resumen" aria-label={t.orderSummary}>
+        <h3>{t.yourOrder}</h3>
         <ul>
           {items.map((i) => (
             <li key={i.id}>
@@ -203,22 +269,22 @@ export default function CheckoutView({ config, puntos, usuario }: Props) {
           ))}
         </ul>
         <p className="resumen-linea">
-          <span>Artículos</span>
+          <span>{t.articles}</span>
           <span>{articulos}</span>
         </p>
         <p className="resumen-total">
-          <span>Total a pagar</span>
+          <span>{t.total}</span>
           <strong>{precio(total)}</strong>
         </p>
         {puntoSeleccionado && (
           <p className="checkout-entrega-resumen">
-            📍 Entrega en <strong>{puntoSeleccionado.nombre}</strong>
+            📍 {t.delivery} <strong>{puntoSeleccionado.nombre}</strong>
             <br />
             {puntoSeleccionado.direccion}
           </p>
         )}
         <p className="resumen-metodo">
-          {METODOS[metodo].icono} {METODOS[metodo].etiqueta}
+          {metodoPago(metodo, locale).icono} {metodoPago(metodo, locale).etiqueta}
         </p>
       </aside>
     </div>

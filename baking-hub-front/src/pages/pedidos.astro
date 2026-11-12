@@ -5,29 +5,36 @@ import PedidoCard from '../components/PedidoCard.astro';
 import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { MIS_PEDIDOS } from '../lib/queries';
+import { localizedMessage, localizedPath } from '../lib/i18n';
 import type { Pedido } from '../types';
 
 const nuevo = Astro.url.searchParams.get('nuevo');
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 
 let pedidos: Pedido[] = [];
 let error: string | null = null;
 try {
   ({ misPedidos: pedidos } = await graphql<{ misPedidos: Pedido[] }>(MIS_PEDIDOS, {}, Astro.locals.token));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 ---
 
-<Layout titulo="Mis pedidos" sidebar>
-  <h2 class="section-title">Mis pedidos</h2>
+<Layout titulo={locale === 'en' ? 'My orders' : 'Mis pedidos'} sidebar>
+  <h2 class="section-title">{locale === 'en' ? 'My orders' : 'Mis pedidos'}</h2>
 
-  {nuevo && !error && <p class="exito" role="status">¡Pedido creado con éxito! Tu número de pedido es #{nuevo}.</p>}
+  {nuevo && !error && (
+    <p class="exito" role="status">
+      {locale === 'en' ? `Order created successfully! Your order number is #${nuevo}.` : `¡Pedido creado con éxito! Tu número de pedido es #${nuevo}.`}
+    </p>
+  )}
   {error && <Alert>{error}</Alert>}
 
   {
     !error && pedidos.length === 0 && (
       <p class="estado-vacio">
-        Todavía no tienes pedidos. <a href="/">Ver el catálogo</a>
+        {locale === 'en' ? 'You do not have any orders yet.' : 'Todavía no tienes pedidos.'}{' '}
+        <a href={localizedPath(locale, '/')}>{locale === 'en' ? 'View catalog' : 'Ver el catálogo'}</a>
       </p>
     )
   }

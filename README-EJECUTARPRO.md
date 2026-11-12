@@ -10,7 +10,7 @@ Node.js/Express integrado con **Mercado Pago (Secure Fields API)**.
 
 Antes de comenzar, asegúrate de tener instalado:
 
--   [Node.js](https://nodejs.org/) (Versión 18 o superior)
+-   [Node.js](https://nodejs.org/) (Versión 22.23.4 o superior para Astro)
 -   `npm` (incluido con Node.js)
 -   Una cuenta de desarrollador en [Mercado Pago
     Developers](https://www.mercadopago.com.mx/developers)
@@ -42,6 +42,10 @@ GRAPHQL_URL=http://localhost:4000/
 GRAPHQL_WS_URL=ws://localhost:4000/subscriptions
 PUBLIC_MP_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 PUBLIC_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY=tu_site_key_de_turnstile
+PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_publica
+PUBLIC_SUPABASE_BUCKET=productos
 ```
 
 > **Nota:** La clave pública debe ser la **Public Key de prueba**
@@ -62,6 +66,7 @@ MP_WEBHOOK_SECRET=xxxxxxxxxxxxxxxx
 BACKEND_PUBLIC_URL=https://url-publica-del-backend.example
 FRONTEND_URL=https://url-publica-de-astro.example
 GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+CLOUDFLARE_TURNSTILE_SECRET_KEY=tu_secret_de_turnstile
 ```
 
 En Google Cloud crea un cliente OAuth de tipo aplicación web y agrega como orígenes autorizados
@@ -71,6 +76,10 @@ del backend; `PUBLIC_GOOGLE_CLIENT_ID` va en el frontend y Netlify.
 El backend agrega automáticamente la columna de Google en el arranque. En Supabase debes cargar `db.sql` una
 vez para crear las tablas iniciales, pero no necesitas correr manualmente SQL adicional. Las cuentas con correo
 y contraseña pueden iniciar sesión sin verificación por correo.
+
+En Cloudflare agrega el dominio de la tienda al widget Turnstile y configura su clave pública en el frontend
+y la clave secreta solo en el backend. En Netlify, `SUPABASE_URL` del backend no reemplaza
+`PUBLIC_SUPABASE_URL`: define esta última junto con la anon key y el nombre del bucket en cada contexto de build.
 
 `FRONTEND_URL` debe ser la URL HTTPS pública de Astro para que Mercado Pago vuelva al pedido y
 redirija automáticamente después de aprobar el pago. Si ngrok apunta solo al frontend, no uses esa

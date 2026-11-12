@@ -24,6 +24,31 @@ export const METODOS: Record<MetodoPago, { etiqueta: string; descripcion: string
   },
 };
 
+const METODOS_EN: Record<MetodoPago, { etiqueta: string; descripcion: string }> = {
+  tarjeta: {
+    etiqueta: 'Credit or debit card',
+    descripcion: 'Visa, Mastercard, and American Express. Charged instantly.',
+  },
+  oxxo: {
+    etiqueta: 'Cash at OXXO',
+    descripcion: 'Get a payment slip and pay at any OXXO store.',
+  },
+  spei: {
+    etiqueta: 'SPEI bank transfer',
+    descripcion: 'Transfer from your bank app or online banking.',
+  },
+  mercadopago: {
+    etiqueta: 'Mercado Pago',
+    descripcion: 'Pay with your balance or cards saved to your account.',
+  },
+};
+
+export function metodoPago(metodo: MetodoPago, locale: 'es' | 'en' = 'es') {
+  return locale === 'en'
+    ? { ...METODOS[metodo], ...METODOS_EN[metodo] }
+    : METODOS[metodo];
+}
+
 /** Estados de un pedido: texto y color de la insignia. */
 export const ESTADOS_PEDIDO: Record<string, { etiqueta: string; clase: 'ok' | 'warn' | 'error' | 'muted' }> = {
   pendiente: { etiqueta: 'Pendiente de pago', clase: 'warn' },
@@ -33,11 +58,23 @@ export const ESTADOS_PEDIDO: Record<string, { etiqueta: string; clase: 'ok' | 'w
   reembolsado: { etiqueta: 'Reembolsado', clase: 'muted' },
 };
 
-export const estadoPedido = (status: string) =>
-  ESTADOS_PEDIDO[status.toLowerCase()] ?? { etiqueta: status, clase: 'muted' as const };
+const ESTADOS_PEDIDO_EN: Record<string, string> = {
+  pendiente: 'Awaiting payment',
+  pagado: 'Paid',
+  cancelado: 'Canceled',
+  expirado: 'Expired',
+  reembolsado: 'Refunded',
+};
+
+export const estadoPedido = (status: string, locale: 'es' | 'en' = 'es') => {
+  const estado = ESTADOS_PEDIDO[status.toLowerCase()] ?? { etiqueta: status, clase: 'muted' as const };
+  return locale === 'en'
+    ? { ...estado, etiqueta: ESTADOS_PEDIDO_EN[status.toLowerCase()] ?? status }
+    : estado;
+};
 
 /** Agrupa una referencia en bloques de 4 dígitos para leerla mejor: 1234 5678 9012 34 */
 export const formatearReferencia = (ref: string) => ref.replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim();
 
-export const formatearFecha = (iso: string) =>
-  new Date(iso).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+export const formatearFecha = (iso: string, locale: 'es' | 'en' = 'es') =>
+  new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'es-MX', { dateStyle: 'medium', timeStyle: 'short' });

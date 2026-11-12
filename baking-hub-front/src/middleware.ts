@@ -10,7 +10,14 @@ const RUTAS_ADMIN = ['/admin'];
 const coincide = (ruta: string, base: string) => ruta === base || ruta.startsWith(`${base}/`);
 
 export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirect }, next) => {
+  if (url.pathname === '/' && cookies.get('baking-hub-locale')?.value === 'en') {
+    return redirect(`/en/${url.search}`, 307);
+  }
+
   const token = cookies.get(COOKIE_SESION)?.value ?? null;
+  const isEnglish = url.pathname === '/en' || url.pathname.startsWith('/en/');
+  const routePath = url.pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+  const localePrefix = isEnglish ? '/en' : '';
   locals.token = token;
   locals.usuario = null;
   let falloAlValidarSesion = false;
@@ -27,7 +34,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirec
     }
   }
 
-  const protegida = RUTAS_PROTEGIDAS.some((r) => coincide(url.pathname, r));
+  const protegida = RUTAS_PROTEGIDAS.some((r) => coincide(routePath, r));
   if (protegida && token && falloAlValidarSesion) {
     return new Response('No pudimos validar tu sesión en este momento. Inténtalo de nuevo.', {
       status: 503,
@@ -41,12 +48,12 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirec
     });
   }
   if (protegida && !locals.usuario) {
-    return redirect(`/login?next=${encodeURIComponent(url.pathname)}`);
+    return redirect(`${localePrefix}/login?next=${encodeURIComponent(url.pathname)}`);
   }
 
   // El panel de administración es solo para admins (el backend vuelve a comprobarlo en cada operación).
-  if (RUTAS_ADMIN.some((r) => coincide(url.pathname, r)) && locals.usuario?.rol !== 'admin') {
-    return redirect('/');
+  if (RUTAS_ADMIN.some((r) => coincide(routePath, r)) && locals.usuario?.rol !== 'admin') {
+    return redirect(localePrefix || '/');
   }
 
   const respuesta = await next();
@@ -55,5 +62,8 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, redirec
   respuesta.headers.set('X-Content-Type-Options', 'nosniff');
   respuesta.headers.set('X-Frame-Options', 'DENY');
   respuesta.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  const catalogoPublico = !token && !locals.usuario &&
+    (routePath === '/' || routePath.startsWith('/categoria/') || routePath.startsWith('/producto/'));
+  respuesta.headers.set('Cache-Control', catalogoPublico ? 'public, max-age=0, must-revalidate' : 'private, no-store');
   return respuesta;
 });

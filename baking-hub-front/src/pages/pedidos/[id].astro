@@ -6,13 +6,15 @@ import Alert from '../../components/Alert.astro';
 import InstruccionesPago from '../../components/InstruccionesPago.astro';
 import { graphql, ApiError } from '../../lib/graphql';
 import { CONFIG_PAGOS, OBTENER_PEDIDO, SIMULAR_PAGO } from '../../lib/queries';
-import { METODOS, estadoPedido, formatearFecha } from '../../lib/pagos';
+import { metodoPago, estadoPedido, formatearFecha } from '../../lib/pagos';
 import { precio } from '../../lib/format';
 import { urlMapa } from '../../lib/mapa';
+import { localizedMessage, localizedPath } from '../../lib/i18n';
 import type { ConfigPagos, Pedido } from '../../types';
 
 const { id } = Astro.params;
-if (!id || !/^\d+$/.test(id)) return Astro.rewrite('/404');
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+if (!id || !/^\d+$/.test(id)) return Astro.rewrite(localizedPath(locale, '/404'));
 const token = Astro.locals.token;
 
 let error: string | null = null;
@@ -23,9 +25,9 @@ if (Astro.request.method === 'POST') {
   if (datos.get('accion') === 'simular-pago') {
     try {
       await graphql(SIMULAR_PAGO, { pedidoId: id }, token);
-      return Astro.redirect(`/pedidos/${id}`, 303);
+      return Astro.redirect(localizedPath(locale, `/pedidos/${id}`), 303);
     } catch (e) {
-      error = e instanceof ApiError ? e.message : 'Error inesperado';
+      error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
     }
   }
 }
@@ -36,40 +38,45 @@ try {
   ({ pedido } = await graphql<{ pedido: Pedido | null }>(OBTENER_PEDIDO, { id }, token));
   ({ configPagos: config } = await graphql<{ configPagos: ConfigPagos }>(CONFIG_PAGOS));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 
-if (!pedido && !error) return Astro.rewrite('/404');
+if (!pedido && !error) return Astro.rewrite(localizedPath(locale, '/404'));
 
 const nuevo = Astro.url.searchParams.get('nuevo') === '1';
-const estado = pedido ? estadoPedido(pedido.status) : null;
+const estado = pedido ? estadoPedido(pedido.status, locale) : null;
 const pendiente = pedido?.status === 'pendiente';
+const fecha = pedido ? formatearFecha(pedido.fecha, locale) : '';
 ---
 
-<Layout titulo={pedido ? `Pedido #${pedido.id}` : 'Pedido'} sidebar>
-  <a class="volver" href="/pedidos">← Mis pedidos</a>
+<Layout titulo={pedido ? `${locale === 'en' ? 'Order' : 'Pedido'} #${pedido.id}` : locale === 'en' ? 'Order' : 'Pedido'} sidebar>
+  <a class="volver" href={localizedPath(locale, '/pedidos')}>{locale === 'en' ? '← My orders' : '← Mis pedidos'}</a>
   {error && <Alert>{error}</Alert>}
 
   {
     pedido && estado && (
       <article class="pedido-detalle">
         <header>
-          <h2 class="section-title">Pedido #{pedido.id}</h2>
+          <h2 class="section-title">{locale === 'en' ? `Order #${pedido.id}` : `Pedido #${pedido.id}`}</h2>
           <span class={`badge badge-${estado.clase}`}>{estado.etiqueta}</span>
         </header>
         <p class="meta">
-          {formatearFecha(pedido.fecha)}
-          {pedido.metodoPago && ` · ${METODOS[pedido.metodoPago].etiqueta}`}
+          {fecha}
+          {pedido.metodoPago && ` · ${metodoPago(pedido.metodoPago, locale).etiqueta}`}
         </p>
 
         {nuevo && pedido.status === 'pagado' && (
           <p class="mensaje-exito" role="status">
-            ¡Pago aprobado! Gracias por tu compra, estamos preparando tu pedido.
+            {locale === 'en'
+              ? 'Payment approved! Thank you for your purchase. We are preparing your order.'
+              : '¡Pago aprobado! Gracias por tu compra, estamos preparando tu pedido.'}
           </p>
         )}
         {nuevo && pendiente && (
           <p class="mensaje-exito" role="status">
-            ¡Pedido creado! Apartamos tus productos; falta completar el pago con las instrucciones de abajo.
+            {locale === 'en'
+              ? 'Order created! Your items are reserved. Complete payment using the instructions below.'
+              : '¡Pedido creado! Apartamos tus productos; falta completar el pago con las instrucciones de abajo.'}
           </p>
         )}
 
@@ -83,23 +90,32 @@ const pendiente = pedido?.status === 'pendiente';
         }
 
         {pedido.status === 'cancelado' && (
-          <p class="aviso">Este pedido fue cancelado y las piezas regresaron al inventario.</p>
+          <p class="aviso">
+            {locale === 'en'
+              ? 'This order was canceled and the items have returned to inventory.'
+              : 'Este pedido fue cancelado y las piezas regresaron al inventario.'}
+          </p>
         )}
         {pedido.status === 'expirado' && (
           <p class="aviso">
-            Este pedido expiró porque no recibimos el pago a tiempo. Si todavía quieres los productos,{' '}
-            <a href="/">vuelve al catálogo</a> y haz un pedido nuevo.
+            {locale === 'en'
+              ? 'This order expired because we did not receive payment in time. If you still want these items, '
+              : 'Este pedido expiró porque no recibimos el pago a tiempo. Si todavía quieres los productos, '}
+            <a href={localizedPath(locale, '/')}>{locale === 'en' ? 'return to the catalog' : 'vuelve al catálogo'}</a>
+            {locale === 'en' ? ' and place a new order.' : ' y haz un pedido nuevo.'}
           </p>
         )}
 
         {pedido.entrega && (
           <p class="entrega-pedido">
-            📍 <strong>Entrega en {pedido.entrega.nombre}</strong>
+            📍 <strong>{locale === 'en' ? 'Delivery to' : 'Entrega en'} {pedido.entrega.nombre}</strong>
             <br />
             {pedido.entrega.direccion}
             {pedido.entrega.referencia && <><br /><em>{pedido.entrega.referencia}</em></>}
             <br />
-            <a href={urlMapa(pedido.entrega.lat, pedido.entrega.lng)} target="_blank" rel="noopener noreferrer">Ver en el mapa</a>
+            <a href={urlMapa(pedido.entrega.lat, pedido.entrega.lng)} target="_blank" rel="noopener noreferrer">
+              {locale === 'en' ? 'View on map' : 'Ver en el mapa'}
+            </a>
           </p>
         )}
 
@@ -120,9 +136,13 @@ const pendiente = pedido?.status === 'pendiente';
         {pendiente && config?.modo === 'simulado' && (
           <form method="POST" class="simulador">
             <input type="hidden" name="accion" value="simular-pago" />
-            <p>Modo de pruebas: simula el pago para ver cómo cambia el estado del pedido.</p>
+            <p>
+              {locale === 'en'
+                ? 'Test mode: simulate payment to see how the order status changes.'
+                : 'Modo de pruebas: simula el pago para ver cómo cambia el estado del pedido.'}
+            </p>
             <button class="btn-primario" type="submit">
-              Simular pago recibido
+              {locale === 'en' ? 'Simulate payment received' : 'Simular pago recibido'}
             </button>
           </form>
         )}

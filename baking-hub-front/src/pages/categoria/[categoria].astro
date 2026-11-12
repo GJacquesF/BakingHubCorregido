@@ -5,11 +5,13 @@ import Alert from '../../components/Alert.astro';
 import { graphql, ApiError } from '../../lib/graphql';
 import { OBTENER_MENU } from '../../lib/queries';
 import { CATEGORIAS, obtenerCategoria } from '../../lib/categorias';
+import { localizedMessage, localizedPath } from '../../lib/i18n';
 import type { Producto } from '../../types';
 
 const nombreCategoria = decodeURIComponent(Astro.params.categoria ?? '');
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 if (!CATEGORIAS.includes(nombreCategoria as (typeof CATEGORIAS)[number]) || nombreCategoria === 'Todas') {
-  return Astro.rewrite('/404');
+  return Astro.rewrite(localizedPath(locale, '/404'));
 }
 
 let productos: Producto[] = [];
@@ -17,25 +19,29 @@ let error: string | null = null;
 try {
   ({ productos } = await graphql<{ productos: Producto[] }>(OBTENER_MENU));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 
 const filtrados = productos.filter((producto) => obtenerCategoria(producto.nombre) === nombreCategoria);
 ---
 
 <Layout
-  titulo={`Postres ${nombreCategoria}`}
-  descripcion={`Explora postres de ${nombreCategoria} de Baking Hub, horneados con ingredientes seleccionados.`}
+  titulo={locale === 'en' ? `Desserts: ${nombreCategoria}` : `Postres ${nombreCategoria}`}
+  descripcion={locale === 'en'
+    ? `Explore Baking Hub’s ${nombreCategoria} desserts, baked with carefully selected ingredients.`
+    : `Explora postres de ${nombreCategoria} de Baking Hub, horneados con ingredientes seleccionados.`}
   imagenLcp={filtrados[0]?.imagen}
   sidebar
   categoriaActiva={nombreCategoria}
 >
-  <h1 class="section-title">Postres de {nombreCategoria}</h1>
-  {error && <Alert>Error de conexión: {error}</Alert>}
+  <h1 class="section-title">{locale === 'en' ? 'Desserts:' : 'Postres de'} {nombreCategoria}</h1>
+  {error && <Alert>{locale === 'en' ? 'Connection error:' : 'Error de conexión:'}{' '}{error}</Alert>}
   {
     !error && (
       <div class="product-grid">
-        {filtrados.length === 0 && <p class="estado-vacio">No hay productos en esta categoría.</p>}
+        {filtrados.length === 0 && (
+          <p class="estado-vacio">{locale === 'en' ? 'There are no products in this category.' : 'No hay productos en esta categoría.'}</p>
+        )}
         {filtrados.map((producto, index) => <ProductCard {...producto} prioridad={index === 0} />)}
       </div>
     )

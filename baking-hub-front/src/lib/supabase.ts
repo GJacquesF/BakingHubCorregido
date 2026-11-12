@@ -16,7 +16,21 @@ export const supabase =
 
 export const SUPABASE_BUCKET = bucketName;
 
+export function getSupabaseClient() {
+    if (!supabase) {
+        const missing = [
+            !supabaseUrl && "PUBLIC_SUPABASE_URL",
+            !supabaseAnonKey && "PUBLIC_SUPABASE_ANON_KEY",
+        ].filter(Boolean);
+        throw new Error(`Configura ${missing.join(" y ")} en el entorno público del frontend.`);
+    }
+
+    return supabase;
+}
+
 export function getSupabasePublicUrl(path: string) {
-    if (!supabaseUrl || !path) return null;
+    if (!path) return null;
+    if (/^(?:https?:)?\/\//i.test(path) || path.startsWith('/')) return path;
+    if (!supabaseUrl) return null;
     return `${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/${bucketName}/${path.replace(/^\//, "")}`;
 }

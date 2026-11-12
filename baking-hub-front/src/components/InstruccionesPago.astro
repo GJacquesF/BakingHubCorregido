@@ -11,31 +11,77 @@ const { pedido } = Astro.props;
 const esOxxo = pedido.metodoPago === 'oxxo';
 const esSpei = pedido.metodoPago === 'spei';
 const esBilletera = pedido.metodoPago === 'mercadopago';
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const texto = locale === 'en'
+  ? {
+      oxxo: 'Pay at any OXXO',
+      spei: 'Pay by SPEI transfer',
+      paymentReference: 'Payment reference',
+      clabe: 'Interbank CLABE',
+      pending: 'Pending generation',
+      exactAmount: 'Exact amount due',
+      payBefore: 'Pay before',
+      copy: 'Copy',
+      reference: 'reference',
+      oxxoStep1: 'Visit any OXXO store and tell the cashier you want to pay a service through Mercado Pago.',
+      oxxoStep2: 'Provide the reference and pay the exact amount in cash.',
+      oxxoStep3: 'Keep your receipt. This page will show “Paid” once your payment is credited.',
+      speiStep1: 'Open your bank app or online banking and choose to make a SPEI transfer.',
+      speiStep2: 'Enter the CLABE and transfer the exact amount.',
+      speiStep3: 'This page will show “Paid” once your transfer is credited.',
+      viewSlip: 'View / print payment slip on Mercado Pago ↗',
+      payment: 'Mercado Pago payment',
+      complete: 'Complete your payment on Mercado Pago',
+      reserved: 'Your order is reserved. Finish paying from your Mercado Pago account.',
+      goTo: 'Go to Mercado Pago',
+    }
+  : {
+      oxxo: 'Paga en cualquier OXXO',
+      spei: 'Paga con transferencia SPEI',
+      paymentReference: 'Referencia de pago',
+      clabe: 'CLABE interbancaria',
+      pending: 'Pendiente de generar',
+      exactAmount: 'Monto exacto a pagar',
+      payBefore: 'Págalo antes del',
+      copy: 'Copiar',
+      reference: 'referencia',
+      oxxoStep1: 'Acude a cualquier tienda OXXO y dile al cajero que quieres hacer un pago de servicio con Mercado Pago.',
+      oxxoStep2: 'Indica la referencia y paga el monto exacto en efectivo.',
+      oxxoStep3: 'Conserva tu comprobante. Esta página mostrará “Pagado” en cuanto se acredite el pago.',
+      speiStep1: 'Abre la app o la banca en línea de tu banco y elige hacer una transferencia SPEI.',
+      speiStep2: 'Captura la CLABE y transfiere el monto exacto.',
+      speiStep3: 'Esta página mostrará “Pagado” en cuanto se acredite la transferencia.',
+      viewSlip: 'Ver / imprimir ficha en Mercado Pago ↗',
+      payment: 'Pago con Mercado Pago',
+      complete: 'Completa tu pago en Mercado Pago',
+      reserved: 'Tu pedido está apartado. Termina el pago desde tu cuenta de Mercado Pago.',
+      goTo: 'Ir a Mercado Pago',
+    };
 // Solo se enlaza a Mercado Pago por https.
 const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
 ---
 
 {
   (esOxxo || esSpei) && (
-    <section class="ficha" aria-label={esOxxo ? 'Ficha de pago OXXO' : 'Datos de transferencia SPEI'}>
-      <h3>{esOxxo ? 'Paga en cualquier OXXO' : 'Paga con transferencia SPEI'}</h3>
+    <section class="ficha" aria-label={esOxxo ? texto.oxxo : texto.spei}>
+      <h3>{esOxxo ? texto.oxxo : texto.spei}</h3>
 
       <dl>
         <div>
-          <dt>{esOxxo ? 'Referencia de pago' : 'CLABE interbancaria'}</dt>
+          <dt>{esOxxo ? texto.paymentReference : texto.clabe}</dt>
           <dd class="referencia" id="referencia-pago">
-            {pedido.pagoReferencia ? formatearReferencia(pedido.pagoReferencia) : 'Pendiente de generar'}
+            {pedido.pagoReferencia ? formatearReferencia(pedido.pagoReferencia) : texto.pending}
           </dd>
         </div>
         <div>
-          <dt>Monto exacto a pagar</dt>
+          <dt>{texto.exactAmount}</dt>
           <dd class="monto">{precio(pedido.total)}</dd>
         </div>
         {
           pedido.pagoExpira && (
             <div>
-              <dt>Págalo antes del</dt>
-              <dd>{formatearFecha(pedido.pagoExpira)}</dd>
+              <dt>{texto.payBefore}</dt>
+              <dd>{formatearFecha(pedido.pagoExpira, locale)}</dd>
             </div>
           )
         }
@@ -44,7 +90,7 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
       {
         pedido.pagoReferencia && (
           <button class="copiar" type="button" data-copiar={pedido.pagoReferencia}>
-            Copiar {esOxxo ? 'referencia' : 'CLABE'}
+            {texto.copy} {esOxxo ? texto.reference : 'CLABE'}
           </button>
         )
       }
@@ -53,15 +99,15 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
         {
           esOxxo ? (
             <>
-              <li>Acude a cualquier tienda OXXO y dile al cajero que quieres hacer un pago de servicio con Mercado Pago.</li>
-              <li>Indica la referencia y paga el monto exacto en efectivo.</li>
-              <li>Conserva tu comprobante. Esta página mostrará “Pagado” en cuanto se acredite el pago.</li>
+              <li>{texto.oxxoStep1}</li>
+              <li>{texto.oxxoStep2}</li>
+              <li>{texto.oxxoStep3}</li>
             </>
           ) : (
             <>
-              <li>Abre la app o la banca en línea de tu banco y elige hacer una transferencia SPEI.</li>
-              <li>Captura la CLABE y transfiere el monto exacto.</li>
-              <li>Esta página mostrará “Pagado” en cuanto se acredite la transferencia.</li>
+              <li>{texto.speiStep1}</li>
+              <li>{texto.speiStep2}</li>
+              <li>{texto.speiStep3}</li>
             </>
           )
         }
@@ -70,7 +116,7 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
       {
         enlace && (
           <a class="enlace-ficha" href={enlace} target="_blank" rel="noopener noreferrer">
-            Ver / imprimir ficha en Mercado Pago ↗
+            {texto.viewSlip}
           </a>
         )
       }
@@ -80,12 +126,12 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
 
 {
   esBilletera && (
-    <section class="ficha" aria-label="Pago con Mercado Pago">
-      <h3>Completa tu pago en Mercado Pago</h3>
-      <p>Tu pedido está apartado. Termina el pago desde tu cuenta de Mercado Pago.</p>
+    <section class="ficha" aria-label={texto.payment}>
+      <h3>{texto.complete}</h3>
+      <p>{texto.reserved}</p>
       {enlace && (
         <a class="btn-primario enlace-btn" href={enlace}>
-          Ir a Mercado Pago
+          {texto.goTo}
         </a>
       )}
     </section>
@@ -98,9 +144,9 @@ const enlace = pedido.pagoUrl?.startsWith('https://') ? pedido.pagoUrl : null;
       const original = boton.textContent;
       try {
         await navigator.clipboard.writeText(boton.dataset.copiar ?? '');
-        boton.textContent = '¡Copiado!';
+        boton.textContent = document.documentElement.dataset.locale === 'en' ? 'Copied!' : '¡Copiado!';
       } catch {
-        boton.textContent = 'No se pudo copiar';
+        boton.textContent = document.documentElement.dataset.locale === 'en' ? 'Could not copy' : 'No se pudo copiar';
       }
       setTimeout(() => (boton.textContent = original), 1800);
     });

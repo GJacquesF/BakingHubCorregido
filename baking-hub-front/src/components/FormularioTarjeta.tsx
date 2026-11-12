@@ -5,13 +5,14 @@ import type { ConfigPagos } from '../types';
 
 interface Props {
   modo: ConfigPagos['modo'];
+  locale: 'es' | 'en';
   valores: DatosTarjeta;
   errores: ErroresTarjeta;
   deshabilitado?: boolean;
   onChange: (valores: DatosTarjeta) => void;
 }
 
-export default function FormularioTarjeta({ modo, valores, errores, deshabilitado, onChange }: Props) {
+export default function FormularioTarjeta({ modo, locale, valores, errores, deshabilitado, onChange }: Props) {
   const valoresRef = useRef(valores);
   const [errorSdk, setErrorSdk] = useState<string | null>(null);
 
@@ -56,8 +57,9 @@ export default function FormularioTarjeta({ modo, valores, errores, deshabilitad
   if (modo === 'simulado') {
     return (
       <p className="instrucciones" role="note">
-        En modo demostración no se realiza ningún cargo ni necesitas ingresar datos de tarjeta. Al continuar, el pedido
-        quedará marcado como pagado de forma simulada.
+        {locale === 'en'
+          ? 'Demo mode does not charge you or require card details. Continuing will mark the order as paid for testing.'
+          : 'En modo demostración no se realiza ningún cargo ni necesitas ingresar datos de tarjeta. Al continuar, el pedido quedará marcado como pagado de forma simulada.'}
       </p>
     );
   }
@@ -71,16 +73,16 @@ export default function FormularioTarjeta({ modo, valores, errores, deshabilitad
       )}
 
       <div className="campo-pago">
-        <label htmlFor="tc-numero">Número de tarjeta</label>
+        <label htmlFor="tc-numero">{locale === 'en' ? 'Card number' : 'Número de tarjeta'}</label>
         <div id="tc-numero" className="mp-input-container" />
       </div>
 
       <div className="campo-pago">
-        <label htmlFor="tc-titular">Nombre del titular</label>
+        <label htmlFor="tc-titular">{locale === 'en' ? 'Cardholder name' : 'Nombre del titular'}</label>
         <input
           id="tc-titular"
           autoComplete="cc-name"
-          placeholder="Como aparece en la tarjeta"
+          placeholder={locale === 'en' ? 'As shown on the card' : 'Como aparece en la tarjeta'}
           value={valores.titular}
           disabled={deshabilitado}
           onChange={(e) => onChange({ ...valores, titular: e.target.value })}
@@ -91,11 +93,11 @@ export default function FormularioTarjeta({ modo, valores, errores, deshabilitad
 
       <div className="fila-doble">
         <div className="campo-pago">
-          <label htmlFor="tc-venc">Vencimiento</label>
+          <label htmlFor="tc-venc">{locale === 'en' ? 'Expiration date' : 'Vencimiento'}</label>
           <div id="tc-venc" className="mp-input-container" />
         </div>
         <div className="campo-pago">
-          <label htmlFor="tc-cvv">Código (CVV)</label>
+          <label htmlFor="tc-cvv">{locale === 'en' ? 'Security code (CVV)' : 'Código (CVV)'}</label>
           <div id="tc-cvv" className="mp-input-container" />
         </div>
       </div>

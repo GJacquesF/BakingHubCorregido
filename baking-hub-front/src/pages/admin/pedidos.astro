@@ -10,7 +10,10 @@ import { estadoPedido, formatearFecha } from '../../lib/pagos';
 import type { PedidoAdmin } from '../../types';
 
 const token = Astro.locals.token;
-const aviso = Astro.url.searchParams.get('ok') === 'actualizado' ? 'Estado del pedido actualizado.' : null;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const aviso = Astro.url.searchParams.get('ok') === 'actualizado'
+  ? locale === 'en' ? 'Order status updated.' : 'Estado del pedido actualizado.'
+  : null;
 let pedidos: PedidoAdmin[] = [];
 let error: string | null = null;
 
@@ -21,58 +24,68 @@ try {
 }
 ---
 
-<AdminLayout titulo="Pedidos" seccion="pedidos">
-  <h2 class="admin-titulo">Pedidos</h2>
-  <p class="admin-subtitulo">Revisa qué pidió cada cliente y cuándo se registró. Los datos personales están ocultos inicialmente.</p>
+<AdminLayout titulo={locale === 'en' ? 'Orders' : 'Pedidos'} seccion="pedidos">
+  <h2 class="admin-titulo">{locale === 'en' ? 'Orders' : 'Pedidos'}</h2>
+  <p class="admin-subtitulo">
+    {locale === 'en'
+      ? 'Review each customer’s order and when it was placed. Personal details are hidden by default.'
+      : 'Revisa qué pidió cada cliente y cuándo se registró. Los datos personales están ocultos inicialmente.'}
+  </p>
 
   {aviso && <p class="mensaje-exito" role="status">{aviso}</p>}
   {error && <Alert>{error}</Alert>}
 
-  {pedidos.length === 0 && !error && <p class="estado-vacio">Todavía no hay pedidos registrados.</p>}
+  {pedidos.length === 0 && !error && (
+    <p class="estado-vacio">{locale === 'en' ? 'No orders have been placed yet.' : 'Todavía no hay pedidos registrados.'}</p>
+  )}
 
   {pedidos.length > 0 && (
     <>
       <div class="pedidos-controles">
-        <div class="filtro-pedidos" role="group" aria-label="Filtrar pedidos por estado de pago">
+        <div class="filtro-pedidos" role="group" aria-label={locale === 'en' ? 'Filter orders by payment status' : 'Filtrar pedidos por estado de pago'}>
           <button type="button" class="filtro-pedido activo" data-order-filter="all" aria-pressed="true">
-            Todos <span>{pedidos.length}</span>
+            {locale === 'en' ? 'All' : 'Todos'} <span>{pedidos.length}</span>
           </button>
           <button type="button" class="filtro-pedido" data-order-filter="paid" aria-pressed="false">
-            Pagados <span>{pedidos.filter((pedido) => pedido.status.toLowerCase() === 'pagado').length}</span>
+            {locale === 'en' ? 'Paid' : 'Pagados'} <span>{pedidos.filter((pedido) => pedido.status.toLowerCase() === 'pagado').length}</span>
           </button>
         </div>
-        <p class="resultado-filtro" data-order-count aria-live="polite">Mostrando {pedidos.length} pedidos</p>
+        <p class="resultado-filtro" data-order-count aria-live="polite">
+          {locale === 'en' ? `Showing ${pedidos.length} orders` : `Mostrando ${pedidos.length} pedidos`}
+        </p>
       </div>
-      <p class="estado-vacio filtro-vacio" data-order-empty hidden>No hay pedidos pagados.</p>
+      <p class="estado-vacio filtro-vacio" data-order-empty hidden>
+        {locale === 'en' ? 'There are no paid orders.' : 'No hay pedidos pagados.'}
+      </p>
       <div class="tabla-wrap" data-order-table>
       <table class="tabla-admin tabla-pedidos">
         <thead>
           <tr>
-            <th scope="col">Pedido</th>
-            <th scope="col">Cliente</th>
-            <th scope="col">Cuándo</th>
-            <th scope="col">Qué pidió</th>
+            <th scope="col">{locale === 'en' ? 'Order' : 'Pedido'}</th>
+            <th scope="col">{locale === 'en' ? 'Customer' : 'Cliente'}</th>
+            <th scope="col">{locale === 'en' ? 'Date' : 'Cuándo'}</th>
+            <th scope="col">{locale === 'en' ? 'Items' : 'Qué pidió'}</th>
             <th scope="col" class="num">Total</th>
-            <th scope="col">Pago</th>
-            <th scope="col">Preparación</th>
-            <th scope="col">Acción</th>
+            <th scope="col">{locale === 'en' ? 'Payment' : 'Pago'}</th>
+            <th scope="col">{locale === 'en' ? 'Preparation' : 'Preparación'}</th>
+            <th scope="col">{locale === 'en' ? 'Action' : 'Acción'}</th>
           </tr>
         </thead>
         <tbody>
           {pedidos.map((pedido) => {
-            const pago = estadoPedido(pedido.status);
+            const pago = estadoPedido(pedido.status, locale);
             return (
               <tr data-payment-status={pedido.status.toLowerCase()}>
-                <td data-label="Pedido"><strong>#{pedido.id}</strong></td>
-                <td data-label="Cliente">
+                <td data-label={locale === 'en' ? 'Order' : 'Pedido'}><strong>#{pedido.id}</strong></td>
+                <td data-label={locale === 'en' ? 'Customer' : 'Cliente'}>
                   <div class="pedido-cliente">
                     <button
                       class="pedido-ojo"
                       type="button"
                       data-customer-toggle
-                      aria-label="Mostrar datos del cliente"
+                      aria-label={locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}
                       aria-expanded="false"
-                      title="Mostrar datos del cliente"
+                      title={locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}
                     >
                       <svg data-eye-open viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
@@ -82,7 +95,7 @@ try {
                         <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
                         <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a15.8 15.8 0 0 1-4.1 4.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.3 0 2.5-.3 3.5-.7" />
                       </svg>
-                      <span class="solo-lector">Mostrar datos del cliente</span>
+                      <span class="solo-lector">{locale === 'en' ? 'Show customer details' : 'Mostrar datos del cliente'}</span>
                     </button>
                     <div data-customer-details hidden>
                       <strong>{pedido.clienteNombre}</strong>
@@ -90,8 +103,8 @@ try {
                     </div>
                   </div>
                 </td>
-                <td data-label="Cuándo">{formatearFecha(pedido.fecha)}</td>
-                <td data-label="Qué pidió">
+                <td data-label={locale === 'en' ? 'Date' : 'Cuándo'} data-column="date">{formatearFecha(pedido.fecha, locale)}</td>
+                <td data-label={locale === 'en' ? 'Items' : 'Qué pidió'} data-column="products">
                   <ul class="pedido-productos-admin">
                     {pedido.productos.map((producto) => (
                       <li>{producto.cantidad} × {producto.nombre}</li>
@@ -108,19 +121,19 @@ try {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Ver en el mapa
+                        {locale === 'en' ? 'View on map' : 'Ver en el mapa'}
                       </a>
                     </p>
                   )}
                 </td>
                 <td data-label="Total" class="num">{precio(pedido.total)}</td>
-                <td data-label="Pago"><span class={`badge badge-${pago.clase}`}>{pago.etiqueta}</span></td>
-                <td data-label="Preparación">
-                  <span class="badge badge-warn" data-order-state>No completado</span>
+                <td data-label={locale === 'en' ? 'Payment' : 'Pago'}><span class={`badge badge-${pago.clase}`}>{pago.etiqueta}</span></td>
+                <td data-label={locale === 'en' ? 'Preparation' : 'Preparación'}>
+                  <span class="badge badge-warn" data-order-state>{locale === 'en' ? 'Not completed' : 'No completado'}</span>
                 </td>
-                <td data-label="Acción">
+                <td data-label={locale === 'en' ? 'Action' : 'Acción'} data-column="action">
                   <button class="btn-admin" type="button" data-order-toggle data-order-id={pedido.id} aria-pressed="false">
-                    Marcar completado
+                    {locale === 'en' ? 'Mark completed' : 'Marcar completado'}
                   </button>
                 </td>
               </tr>
@@ -189,9 +202,9 @@ try {
     }
     .tabla-pedidos td { min-width: 0; padding: 0.75rem; border-top: 0; overflow-wrap: anywhere; }
     .tabla-pedidos td::before { content: attr(data-label); display: block; margin-bottom: 0.3rem; color: var(--espresso-soft); font-size: 0.75rem; font-weight: 600; }
-    .tabla-pedidos td[data-label='Qué pidió'],
-    .tabla-pedidos td[data-label='Acción'] { grid-column: 1 / -1; }
-    .tabla-pedidos td[data-label='Cuándo'] { grid-column: 1 / -1; }
+    .tabla-pedidos td[data-column='products'],
+    .tabla-pedidos td[data-column='action'],
+    .tabla-pedidos td[data-column='date'] { grid-column: 1 / -1; }
     .tabla-pedidos .num { text-align: left; }
     .pedido-cliente { min-width: 0; }
     .pedido-productos-admin { min-width: 0; }
@@ -200,6 +213,28 @@ try {
 </style>
 
 <script>
+  const locale = document.documentElement.dataset.locale === 'en' ? 'en' : 'es';
+  const texto = locale === 'en'
+    ? {
+        complete: 'Completed',
+        incomplete: 'Not completed',
+        markComplete: 'Mark completed',
+        markIncomplete: 'Mark not completed',
+        hideCustomer: 'Hide customer details',
+        showCustomer: 'Show customer details',
+        showingOne: 'Showing 1 order',
+        showingMany: (count: number) => `Showing ${count} orders`,
+      }
+    : {
+        complete: 'Completado',
+        incomplete: 'No completado',
+        markComplete: 'Marcar completado',
+        markIncomplete: 'Marcar no completado',
+        hideCustomer: 'Ocultar datos del cliente',
+        showCustomer: 'Mostrar datos del cliente',
+        showingOne: 'Mostrando 1 pedido',
+        showingMany: (count: number) => `Mostrando ${count} pedidos`,
+      };
   const claveEstadoPedidos = 'baking-hub-pedidos-completados';
   let completados: string[] = [];
   try {
@@ -213,10 +248,10 @@ try {
     const fila = boton.closest('tr');
     const estado = fila?.querySelector<HTMLElement>('[data-order-state]');
     if (!estado) return;
-    estado.textContent = completado ? 'Completado' : 'No completado';
+    estado.textContent = completado ? texto.complete : texto.incomplete;
     estado.classList.toggle('badge-ok', completado);
     estado.classList.toggle('badge-warn', !completado);
-    boton.textContent = completado ? 'Marcar no completado' : 'Marcar completado';
+    boton.textContent = completado ? texto.markIncomplete : texto.markComplete;
     boton.classList.toggle('sec', completado);
     boton.setAttribute('aria-pressed', String(completado));
   };
@@ -244,7 +279,7 @@ try {
       ojoAbierto.classList.toggle('icono-oculto', mostrar);
       ojoCerrado.classList.toggle('icono-oculto', !mostrar);
       boton.setAttribute('aria-expanded', String(mostrar));
-      const etiqueta = mostrar ? 'Ocultar datos del cliente' : 'Mostrar datos del cliente';
+      const etiqueta = mostrar ? texto.hideCustomer : texto.showCustomer;
       boton.setAttribute('aria-label', etiqueta);
       boton.title = etiqueta;
       const lector = boton.querySelector<HTMLElement>('.solo-lector');
@@ -275,7 +310,9 @@ try {
         opcion.setAttribute('aria-pressed', String(seleccionado));
       });
 
-      if (contadorResultados) contadorResultados.textContent = `Mostrando ${visibles} ${visibles === 1 ? 'pedido' : 'pedidos'}`;
+      if (contadorResultados) {
+        contadorResultados.textContent = visibles === 1 ? texto.showingOne : texto.showingMany(visibles);
+      }
       if (mensajeSinResultados) mensajeSinResultados.hidden = visibles > 0;
       if (tablaPedidos) tablaPedidos.hidden = visibles === 0;
     });

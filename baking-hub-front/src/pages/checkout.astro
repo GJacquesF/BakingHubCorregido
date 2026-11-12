@@ -5,9 +5,11 @@ import CheckoutView from '../components/CheckoutView';
 import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { CONFIG_PAGOS, PUNTOS_ENTREGA } from '../lib/queries';
+import { localizedMessage } from '../lib/i18n';
 import type { ConfigPagos, PuntoEntrega } from '../types';
 
 const usuario = Astro.locals.usuario!;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 
 let config: ConfigPagos | null = null;
 let puntos: PuntoEntrega[] = [];
@@ -16,19 +18,21 @@ try {
   ({ configPagos: config } = await graphql<{ configPagos: ConfigPagos }>(CONFIG_PAGOS));
   ({ puntosEntrega: puntos } = await graphql<{ puntosEntrega: PuntoEntrega[] }>(PUNTOS_ENTREGA, {}, Astro.locals.token));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 ---
 
 <Layout titulo="Checkout" sidebar>
   <script is:inline src="https://sdk.mercadopago.com/js/v2" defer></script>
-  <h2 class="section-title">Finalizar compra</h2>
-  {error && <Alert>No pudimos cargar los métodos de pago: {error}</Alert>}
+  <h2 class="section-title">{locale === 'en' ? 'Complete your purchase' : 'Finalizar compra'}</h2>
+  {error && (
+    <Alert>{locale === 'en' ? 'We could not load payment methods:' : 'No pudimos cargar los métodos de pago:'}{' '}{error}</Alert>
+  )}
   {
     config && (
-      <CheckoutView client:only="react" config={config} puntos={puntos} usuario={{ nombre: usuario.nombre, email: usuario.email }}>
+      <CheckoutView client:only="react" config={config} puntos={puntos} usuario={{ nombre: usuario.nombre, email: usuario.email }} locale={locale}>
         <p slot="fallback" class="estado-vacio">
-          Cargando tu orden…
+          {locale === 'en' ? 'Loading your order…' : 'Cargando tu orden…'}
         </p>
       </CheckoutView>
     )

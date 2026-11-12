@@ -19,7 +19,7 @@ Otros comandos: `npm run check` (tipos), `npm run build`, `npm start` (sirve el 
 src/
 ├── layouts/Layout.astro        Página base: <head>, Header, Sidebar opcional, Footer
 ├── components/
-│   ├── Header.astro            Marca, enlaces de cuenta (Ingresar / Salir) y carrito
+│   ├── Header.astro            Marca, enlaces de cuenta, instalación PWA y carrito
 │   ├── Sidebar.astro           Categorías (enlaces reales: /?categoria=…)
 │   ├── Hero.astro  WhyUs.astro  Footer.astro  Alert.astro
 │   ├── ProductCard.astro       Tarjeta del catálogo
@@ -43,6 +43,46 @@ src/
 ├── styles/                     global.css (tokens y piezas compartidas), carrito.css (islas React)
 └── types.ts
 ```
+
+## PWA y prueba sin conexión
+
+`npm run build` crea el service worker y precarga los bundles de CSS/JS, el manifiesto, los
+iconos y la página `offline.html`. Durante el uso guarda imágenes y las páginas públicas del
+catálogo y de productos visitadas. Las rutas `/api/`, administración, pagos, pedidos y sesión
+no se guardan en caché.
+
+Para probar localmente, inicia Astro desde `baking-hub-front` (no requiere créditos ni despliegue en Netlify):
+
+```bash
+cd baking-hub-front
+npm run dev -- --host 127.0.0.1
+```
+
+Abre `http://localhost:4321`, visita el catálogo y al menos un producto, y luego usa Chrome
+DevTools → **Application** para confirmar el manifiesto y el service worker. En **Network**,
+activa **Offline** y recarga esas páginas; las visitadas deben cargar desde caché y las no
+guardadas deben mostrar `offline.html`. Toma las capturas con la aplicación en esa ventana.
+El catálogo y las fichas pueden estar desactualizados; pagos, autenticación y datos nuevos
+requieren conexión.
+
+Para comprobar la lista de recursos precargados del build de producción, ejecuta `npm run build`
+y verifica `dist/sw.js`; el servidor de desarrollo también guarda los recursos a medida que se
+visitan.
+
+Astro i18n usa español por defecto en `/` e inglés en `/en/`. Cambia el idioma desde el selector
+del encabezado; el sitio conserva la ruta de la página cuando existe en ambos idiomas.
+
+Para el almacenamiento de imágenes en Netlify, configura `PUBLIC_SUPABASE_URL`,
+`PUBLIC_SUPABASE_ANON_KEY` y `PUBLIC_SUPABASE_BUCKET` para los contextos de build. La URL y la
+anon key llevan prefijo `PUBLIC_` porque el navegador las necesita; el bucket debe permitir
+lecturas públicas para que funcionen las URL de imágenes. No uses una service-role key en el
+frontend. Si ya existe `SUPABASE_URL` sin `PUBLIC_`, agrega también `PUBLIC_SUPABASE_URL`: la
+variable privada del backend no se incorpora al bundle del navegador.
+
+Cloudflare Turnstile requiere `PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY` en el frontend y
+`CLOUDFLARE_TURNSTILE_SECRET_KEY` en el backend. La clave secreta es obligatoria en producción.
+
+Usa Node.js 22.23.4 o superior para ejecutar Astro (`npm run check` y `npm run build`).
 
 ## Cómo funciona la autenticación
 

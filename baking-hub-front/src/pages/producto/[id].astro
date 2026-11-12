@@ -4,29 +4,35 @@ import ProductDetail from '../../components/ProductDetail.astro';
 import Alert from '../../components/Alert.astro';
 import { graphql, ApiError } from '../../lib/graphql';
 import { OBTENER_PRODUCTO } from '../../lib/queries';
+import { localizedMessage, localizedPath } from '../../lib/i18n';
 import type { Producto } from '../../types';
 
 const { id } = Astro.params;
-if (!id || !/^\d+$/.test(id)) return Astro.rewrite('/404');
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+if (!id || !/^\d+$/.test(id)) return Astro.rewrite(localizedPath(locale, '/404'));
 
 let producto: Producto | null = null;
 let error: string | null = null;
 try {
   ({ producto } = await graphql<{ producto: Producto | null }>(OBTENER_PRODUCTO, { id }));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 
-if (!producto && !error) return Astro.rewrite('/404');
+if (!producto && !error) return Astro.rewrite(localizedPath(locale, '/404'));
 ---
 
 <Layout
   titulo={producto?.nombre}
-  descripcion={producto ? `${producto.nombre}: postre artesanal horneado en Baking Hub por ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(producto.precio)}.` : undefined}
+  descripcion={producto
+    ? locale === 'en'
+      ? `${producto.nombre}: artisan dessert baked at Baking Hub for ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MXN' }).format(producto.precio)}.`
+      : `${producto.nombre}: postre artesanal horneado en Baking Hub por ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(producto.precio)}.`
+    : undefined}
   imagenSocial={producto?.imagen}
   imagenLcp={producto?.imagen}
   sidebar
 >
-  {error && <Alert>Error de conexión: {error}</Alert>}
+  {error && <Alert>{locale === 'en' ? 'Connection error:' : 'Error de conexión:'}{' '}{error}</Alert>}
   {producto && <ProductDetail producto={producto} />}
 </Layout>

@@ -9,9 +9,17 @@ interface Props {
 }
 
 const { titulo, seccion } = Astro.props;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const titulosEn: Record<Props['seccion'], string> = {
+  resumen: 'Summary',
+  pedidos: 'Orders',
+  inventario: 'Inventory',
+  entregas: 'Deliveries',
+  usuarios: 'Customers',
+};
 ---
 
-<Layout titulo={`Admin · ${titulo}`}>
+<Layout titulo={`Admin · ${locale === 'en' ? titulosEn[seccion] : titulo}`}>
   <AdminNav activa={seccion} />
   <slot />
 </Layout>

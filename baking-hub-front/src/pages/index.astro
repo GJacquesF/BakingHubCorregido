@@ -7,11 +7,13 @@ import Alert from '../components/Alert.astro';
 import { graphql, ApiError } from '../lib/graphql';
 import { OBTENER_MENU } from '../lib/queries';
 import { CATEGORIAS } from '../lib/categorias';
+import { localizedMessage, localizedPath } from '../lib/i18n';
 import type { Producto } from '../types';
 
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const categoriaSolicitada = CATEGORIAS.find((c) => c === Astro.url.searchParams.get('categoria'));
 if (categoriaSolicitada && categoriaSolicitada !== 'Todas') {
-  return Astro.redirect(`/categoria/${encodeURIComponent(categoriaSolicitada)}`, 301);
+  return Astro.redirect(localizedPath(locale, `/categoria/${encodeURIComponent(categoriaSolicitada)}`), 301);
 }
 const categoria = 'Todas';
 
@@ -20,24 +22,30 @@ let error: string | null = null;
 try {
   ({ productos } = await graphql<{ productos: Producto[] }>(OBTENER_MENU));
 } catch (e) {
-  error = e instanceof ApiError ? e.message : 'Error inesperado';
+  error = localizedMessage(e instanceof ApiError ? e.message : 'Error inesperado', locale);
 }
 
 const filtrados = productos;
 ---
 
 <Layout
-  titulo={categoria === 'Todas' ? 'Postres artesanales' : `Postres ${categoria}`}
-  descripcion="Explora el catálogo completo de postres artesanales de Baking Hub, horneados con ingredientes seleccionados."
+  titulo={locale === 'en' ? 'Artisan desserts' : 'Postres artesanales'}
+  descripcion={locale === 'en'
+    ? 'Explore Baking Hub’s full catalog of artisan desserts, baked with carefully selected ingredients.'
+    : 'Explora el catálogo completo de postres artesanales de Baking Hub, horneados con ingredientes seleccionados.'}
   imagenLcp={productos[0]?.imagen}
   sidebar
   categoriaActiva={categoria}
 >
   {categoria === 'Todas' && <Hero />}
 
-  {categoria === 'Todas' ? <h2 class="section-title" data-i18n="home.catalog">Catálogo: {categoria}</h2> : <h1 class="section-title" data-i18n="home.catalog">Catálogo: {categoria}</h1>}
+  {categoria === 'Todas'
+    ? <h2 class="section-title">{locale === 'en' ? 'Catalog' : 'Catálogo'}</h2>
+    : <h1 class="section-title">{locale === 'en' ? 'Catalog' : 'Catálogo'}: {categoria}</h1>}
 
-  {error && <Alert>Error de conexión: {error}</Alert>}
+  {error && (
+    <Alert>{locale === 'en' ? 'Connection error:' : 'Error de conexión:'}{' '}{error}</Alert>
+  )}
 
   {
     !error && (

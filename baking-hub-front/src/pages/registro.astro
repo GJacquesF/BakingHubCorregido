@@ -7,9 +7,11 @@ import GoogleSignIn from '../components/GoogleSignIn';
 import { graphql, ApiError } from '../lib/graphql';
 import { REGISTRAR } from '../lib/queries';
 import { rutaSegura } from '../lib/auth';
+import { localizedPath } from '../lib/i18n';
 
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const next = rutaSegura(Astro.url.searchParams.get('next'));
-if (Astro.locals.usuario) return Astro.redirect(next);
+if (Astro.locals.usuario) return Astro.redirect(localizedPath(locale, next));
 
 let error: string | null = null;
 let mensaje: string | null = null;
@@ -25,29 +27,30 @@ if (Astro.request.method === 'POST') {
   const confirmar = String(datos.get('confirmar') ?? '');
   const turnstileEnabled = Boolean(import.meta.env.PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY);
   const turnstileToken = String(datos.get('cf-turnstile-response') ?? '').trim();
-  const humanCheck = String(datos.get('turnstile-human') ?? '') === 'on';
 
   if (turnstileEnabled && !turnstileToken) {
-    error = 'Completa la verificación de seguridad antes de crear la cuenta.';
-  } else if (!turnstileEnabled && !humanCheck) {
-    error = 'Marca la casilla para confirmar que eres humano.';
+    error = locale === 'en'
+      ? 'Complete the security check before creating an account.'
+      : 'Completa la verificación de seguridad antes de crear la cuenta.';
   } else if (password !== confirmar) {
-    error = 'Las contraseñas no coinciden.';
+    error = locale === 'en' ? 'The passwords do not match.' : 'Las contraseñas no coinciden.';
   } else {
     try {
       await graphql<{ registrar: { mensaje: string } }>(REGISTRAR, {
         nombre,
         email,
         password,
-        turnstileToken: turnstileEnabled ? turnstileToken : humanCheck ? 'manual-human-check' : null,
+        turnstileToken: turnstileEnabled ? turnstileToken : null,
       });
       registroExitoso = true;
-      mensaje = 'Cuenta creada. Ya puedes iniciar sesión.';
+      mensaje = locale === 'en' ? 'Account created. You can now sign in.' : 'Cuenta creada. Ya puedes iniciar sesión.';
     } catch (e) {
       error =
         e instanceof ApiError && e.codigo === 'BAD_USER_INPUT'
           ? e.message
-          : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
+          : locale === 'en'
+            ? 'We could not create your account. Please try again in a moment.'
+            : 'No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.';
     }
   }
 }
@@ -65,7 +68,7 @@ if (Astro.request.method === 'POST') {
     {error && <Alert>{error}</Alert>}
     {mensaje && <p role="status">{mensaje}</p>}
     {registroExitoso ? (
-      <p><a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.continue">Ir a iniciar sesión</a></p>
+      <p><a href={`${localizedPath(locale, '/login')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.continue">Ir a iniciar sesión</a></p>
     ) : (
       <>
         <form method="POST">
@@ -82,21 +85,16 @@ if (Astro.request.method === 'POST') {
                 data-size="normal"
               />
             </div>
-          ) : (
-            <label class="human-check">
-              <input type="checkbox" name="turnstile-human" />
-              <span data-i18n="auth.human">Confirmo que soy humano</span>
-            </label>
-          )}
+          ) : null}
           <button class="btn-primario" type="submit" data-i18n="auth.submitRegister">Crear cuenta</button>
         </form>
-        <p class="separador-auth">O continúa con</p>
-        <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} />
+        <p class="separador-auth">{locale === 'en' ? 'Or continue with' : 'O continúa con'}</p>
+        <GoogleSignIn client:load clientId={import.meta.env.PUBLIC_GOOGLE_CLIENT_ID} next={next} locale={locale} />
       </>
     )}
     <Fragment slot="pie">
       <span data-i18n="auth.alreadyAccount">¿Ya tienes cuenta?</span>{' '}
-      <a href={`/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.submitLogin">Ingresar</a>
+      <a href={`${localizedPath(locale, '/login')}${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`} data-i18n="auth.submitLogin">Ingresar</a>
     </Fragment>
   </AuthCard>
 </Layout>
@@ -114,22 +112,4 @@ if (Astro.request.method === 'POST') {
     margin: 1rem 0 0.5rem;
   }
 
-  .human-check {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin: 1rem 0 0.85rem;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--espresso-soft);
-    font-size: 0.95rem;
-  }
-
-  .human-check input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--melon);
-  }
 </style>

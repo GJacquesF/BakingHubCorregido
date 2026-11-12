@@ -1,6 +1,8 @@
 ---
 import AddToCartButton from './AddToCartButton';
 import { precio } from '../lib/format';
+import { localizedPath } from '../lib/i18n';
+import { getSupabasePublicUrl } from '../lib/supabase';
 import type { Producto } from '../types';
 
 interface Props {
@@ -8,6 +10,8 @@ interface Props {
 }
 
 const { producto } = Astro.props;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const imagenUrl = getSupabasePublicUrl(producto.imagen) ?? producto.imagen;
 const productUrl = new URL(Astro.url.pathname, Astro.url.origin).toString();
 const productJsonLd = JSON.stringify({
   '@context': 'https://schema.org',
@@ -28,9 +32,9 @@ const productJsonLd = JSON.stringify({
 
 <script type="application/ld+json" set:html={productJsonLd} />
 <div class="detalle-card">
-  <a class="volver-btn" href="/" data-i18n="product.backCatalog">← Volver al catálogo</a>
+  <a class="volver-btn" href={localizedPath(locale, '/')} data-i18n="product.backCatalog">← Volver al catálogo</a>
   <h1>{producto.nombre}</h1>
-  <img src={producto.imagen} alt={producto.nombre} width="720" height="480" loading="eager" fetchpriority="high" />
+  <img src={imagenUrl} alt={producto.nombre} width="720" height="480" loading="eager" fetchpriority="high" />
   <p class="detalle-precio" data-i18n="product.price">Precio: {precio(producto.precio)}</p>
   {producto.stock <= 0 && <p class="existencia agotado" data-i18n="product.outOfStock">Producto agotado por ahora</p>}
   {producto.stock > 0 && producto.stock <= 5 && (

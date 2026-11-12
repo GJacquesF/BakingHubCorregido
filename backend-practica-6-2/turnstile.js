@@ -1,6 +1,11 @@
 export async function verificarTurnstile(token, remoteIp = null) {
     const secret = (process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? "").trim();
-    if (!secret) return true;
+    if (!secret) {
+        if (process.env.NODE_ENV === "production") {
+            throw new Error("Falta configurar CLOUDFLARE_TURNSTILE_SECRET_KEY");
+        }
+        return true;
+    }
 
     const valor = typeof token === "string" ? token.trim() : "";
     if (!valor) throw new Error("Captcha requerido");

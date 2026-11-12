@@ -1,11 +1,14 @@
 ---
 import { totalArticulos } from '../stores/carrito';
+import { localizedPath } from '../lib/i18n';
 
 const cantidad = totalArticulos.get();
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const label = locale === 'en' ? 'Cart' : 'Carrito';
 ---
 
-<a class="cart-button" href="/carrito" aria-live="polite" aria-atomic="true" aria-label={`Carrito, ${cantidad} artículos`}>
-  <span data-i18n="cart.label">Carrito</span> (<span data-cart-count>{cantidad}</span>)
+<a class="cart-button" href={localizedPath(locale, '/carrito')} aria-live="polite" aria-atomic="true" aria-label={locale === 'en' ? `Cart, ${cantidad} items` : `Carrito, ${cantidad} artículos`}>
+  <span data-i18n="cart.label">{label}</span> (<span data-cart-count>{cantidad}</span>)
 </a>
 
 <script>

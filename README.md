@@ -50,7 +50,7 @@ BakingHubCorregido/
 
 Para ejecutar el proyecto localmente necesitas:
 
-- [Node.js](https://nodejs.org/) y npm.
+- [Node.js](https://nodejs.org/) **22.23.4 o superior** y npm (requisito de Astro).
 - [PostgreSQL](https://www.postgresql.org/).
 - Git.
 - Un terminal y un navegador web.

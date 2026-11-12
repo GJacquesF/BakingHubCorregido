@@ -3,6 +3,8 @@
     color-scheme: light;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --color-primario: #7c2d12;
+    --color-fondo: #fff8f3;
     --bg: #f3ece4;
     --bg-deep: #e6d7ca;
     --surface: #f7f0e8;
@@ -240,6 +242,19 @@ a {
 .cart-button:hover {
     transform: translateY(-1px);
 }
+
+.pwa-install {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-primario);
+  color: var(--color-fondo);
+  font: 600 0.9rem/1 var(--font-body);
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pwa-install:hover { filter: brightness(1.12); }
 
 /* Mensajes de error (componente Alert e isla de checkout) */
 .mensaje-error {

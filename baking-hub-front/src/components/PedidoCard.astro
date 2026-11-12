@@ -1,6 +1,7 @@
 ---
 import { precio } from '../lib/format';
-import { METODOS, estadoPedido } from '../lib/pagos';
+import { estadoPedido, formatearFecha, metodoPago } from '../lib/pagos';
+import { localizedPath } from '../lib/i18n';
 import type { Pedido } from '../types';
 
 interface Props {
@@ -9,15 +10,17 @@ interface Props {
 }
 
 const { pedido, destacado = false } = Astro.props;
-const fecha = new Date(pedido.fecha).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
-const estado = estadoPedido(pedido.status);
-const metodo = pedido.metodoPago ? METODOS[pedido.metodoPago] : null;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const fecha = formatearFecha(pedido.fecha, locale);
+const estado = estadoPedido(pedido.status, locale);
+const metodo = pedido.metodoPago ? metodoPago(pedido.metodoPago, locale) : null;
 const porPagar = pedido.status === 'pendiente' && pedido.metodoPago !== null;
+const detalles = localizedPath(locale, `/pedidos/${pedido.id}`);
 ---
 
 <article class:list={['pedido', { destacado }]}>
   <header>
-    <h3><a href={`/pedidos/${pedido.id}`}>Pedido #{pedido.id}</a></h3>
+    <h3><a href={detalles}>{locale === 'en' ? `Order #${pedido.id}` : `Pedido #${pedido.id}`}</a></h3>
     <span class={`badge badge-${estado.clase}`}>{estado.etiqueta}</span>
   </header>
   <p class="fecha">{fecha}{metodo && ` · ${metodo.etiqueta}`}</p>
@@ -33,7 +36,11 @@ const porPagar = pedido.status === 'pendiente' && pedido.metodoPago !== null;
   </ul>
   <p class="total">Total: <strong>{precio(pedido.total)}</strong></p>
   <p class="acciones">
-    <a href={`/pedidos/${pedido.id}`}>{porPagar ? 'Ver instrucciones de pago →' : 'Ver detalle →'}</a>
+    <a href={detalles}>
+      {porPagar
+        ? locale === 'en' ? 'View payment instructions →' : 'Ver instrucciones de pago →'
+        : locale === 'en' ? 'View details →' : 'Ver detalle →'}
+    </a>
   </p>
 </article>
 

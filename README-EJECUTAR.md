@@ -51,6 +51,8 @@ distintas:
 
 ## 1. Instalar PostgreSQL, Node.js y npm
 
+El frontend requiere **Node.js 22.23.4 o superior** (Astro 7); el backend requiere Node.js 20 o superior.
+
 ```bash
 sudo pacman -Syu postgresql nodejs npm
 ```

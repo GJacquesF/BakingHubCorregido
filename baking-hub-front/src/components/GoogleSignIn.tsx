@@ -45,17 +45,31 @@ function cargarGoogleIdentity(): Promise<void> {
 interface Props {
   clientId?: string;
   next: string;
+  locale: 'es' | 'en';
 }
 
-export default function GoogleSignIn({ clientId, next }: Props) {
+export default function GoogleSignIn({ clientId, next, locale }: Props) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
+  const t = locale === 'en'
+    ? {
+        notConfigured: 'Google sign-in is not configured.',
+        missingCredential: 'Google did not return a valid credential. Please try again.',
+        signInFailed: 'Could not sign in with Google.',
+        loadFailed: 'Could not load Google sign-in.',
+      }
+    : {
+        notConfigured: 'El inicio con Google no está configurado.',
+        missingCredential: 'Google no devolvió una credencial válida. Inténtalo de nuevo.',
+        signInFailed: 'No se pudo iniciar sesión con Google.',
+        loadFailed: 'No se pudo cargar el servicio de Google.',
+      };
 
   useEffect(() => {
     let activo = true;
 
     if (!clientId) {
-      setError('El inicio con Google no está configurado.');
+      setError(t.notConfigured);
       return () => {
         activo = false;
       };
@@ -69,7 +83,7 @@ export default function GoogleSignIn({ clientId, next }: Props) {
           client_id: clientId,
           callback: async ({ credential }) => {
             if (!credential) {
-              setError('Google no devolvió una credencial válida. Inténtalo de nuevo.');
+              setError(t.missingCredential);
               return;
             }
 
@@ -81,10 +95,10 @@ export default function GoogleSignIn({ clientId, next }: Props) {
                 body: JSON.stringify({ idToken: credential }),
               });
               const result = (await response.json()) as { error?: string };
-              if (!response.ok) throw new Error(result.error || 'No se pudo iniciar sesión con Google.');
+              if (!response.ok) throw new Error(result.error || t.signInFailed);
               window.location.assign(next);
             } catch (cause) {
-              setError(cause instanceof Error ? cause.message : 'No se pudo iniciar sesión con Google.');
+              setError(cause instanceof Error ? cause.message : t.signInFailed);
             }
           },
         });
@@ -95,14 +109,14 @@ export default function GoogleSignIn({ clientId, next }: Props) {
           width: 320,
         });
       })
-      .catch((cause: unknown) => {
-        if (activo) setError(cause instanceof Error ? cause.message : 'No se pudo cargar el servicio de Google.');
+      .catch(() => {
+        if (activo) setError(t.loadFailed);
       });
 
     return () => {
       activo = false;
     };
-  }, [clientId, next]);
+  }, [clientId, next, t.loadFailed, t.missingCredential, t.notConfigured, t.signInFailed]);
 
   return (
     <div className="google-login">

@@ -12,16 +12,27 @@ import {
 } from '../../lib/queries';
 import { ErrorFormulario, entero, mensajeError, nivelStock, numero, texto } from '../../lib/admin';
 import { precio } from '../../lib/format';
+import { localizedPath } from '../../lib/i18n';
+import { getSupabasePublicUrl } from '../../lib/supabase';
 import type { Producto } from '../../types';
 
 const token = Astro.locals.token;
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
 const AVISOS: Record<string, string> = {
   creado: 'Producto agregado al inventario.',
   actualizado: 'Producto actualizado.',
   stock: 'Existencias actualizadas.',
   eliminado: 'Producto eliminado del catálogo.',
 };
-const aviso = AVISOS[Astro.url.searchParams.get('ok') ?? ''] ?? null;
+const AVISOS_EN: Record<string, string> = {
+  creado: 'Product added to inventory.',
+  actualizado: 'Product updated.',
+  stock: 'Inventory updated.',
+  eliminado: 'Product removed from the catalog.',
+};
+const avisoKey = Astro.url.searchParams.get('ok') ?? '';
+const aviso = locale === 'en' ? AVISOS_EN[avisoKey] ?? null : AVISOS[avisoKey] ?? null;
+const urlInventario = (ok: string) => `${localizedPath(locale, '/admin/inventario')}?ok=${ok}`;
 
 let error: string | null = null;
 let nuevo = { nombre: '', precio: '', imagen: '', stock: '' };
@@ -43,7 +54,7 @@ if (Astro.request.method === 'POST') {
           },
           token,
         );
-        return Astro.redirect('/admin/inventario?ok=creado', 303);
+        return Astro.redirect(urlInventario('creado'), 303);
       }
       case 'actualizar': {
         await graphql(
@@ -57,17 +68,17 @@ if (Astro.request.method === 'POST') {
           },
           token,
         );
-        return Astro.redirect('/admin/inventario?ok=actualizado', 303);
+        return Astro.redirect(urlInventario('actualizado'), 303);
       }
       case 'ajustar': {
         const cantidad = entero(datos, 'cantidad', 'La cantidad');
         if (cantidad <= 0) throw new ErrorFormulario('La cantidad a agregar debe ser mayor a 0.');
         await graphql(AJUSTAR_STOCK, { id: texto(datos, 'id'), cantidad }, token);
-        return Astro.redirect('/admin/inventario?ok=stock', 303);
+        return Astro.redirect(urlInventario('stock'), 303);
       }
       case 'eliminar': {
         await graphql(ELIMINAR_PRODUCTO, { id: texto(datos, 'id') }, token);
-        return Astro.redirect('/admin/inventario?ok=eliminado', 303);
+        return Astro.redirect(urlInventario('eliminado'), 303);
       }
       default:
         throw new ErrorFormulario('Acción no reconocida.');
@@ -85,52 +96,59 @@ try {
 }
 ---
 
-<AdminLayout titulo="Inventario" seccion="inventario">
-  <h2 class="admin-titulo">Inventario</h2>
-  <p class="admin-subtitulo">Da de alta productos nuevos y controla cuántas piezas hay de cada uno.</p>
+<AdminLayout titulo={locale === 'en' ? 'Inventory' : 'Inventario'} seccion="inventario">
+  <h2 class="admin-titulo">{locale === 'en' ? 'Inventory' : 'Inventario'}</h2>
+  <p class="admin-subtitulo">
+    {locale === 'en' ? 'Add products and manage the available quantity for each one.' : 'Da de alta productos nuevos y controla cuántas piezas hay de cada uno.'}
+  </p>
 
   {aviso && <p class="mensaje-exito" role="status">{aviso}</p>}
   {error && <Alert>{error}</Alert>}
 
   <section class="admin-bloque">
-    <h3>Agregar producto nuevo</h3>
+    <h3>{locale === 'en' ? 'Add a new product' : 'Agregar producto nuevo'}</h3>
     <form method="POST" class="form-grid">
       <input type="hidden" name="accion" value="crear" />
       <div class="campo-admin">
-        <label for="n-nombre">Nombre</label>
+        <label for="n-nombre">{locale === 'en' ? 'Name' : 'Nombre'}</label>
         <input id="n-nombre" name="nombre" value={nuevo.nombre} maxlength="100" required />
       </div>
       <div class="campo-admin">
-        <label for="n-precio">Precio (MXN)</label>
+        <label for="n-precio">{locale === 'en' ? 'Price (MXN)' : 'Precio (MXN)'}</label>
         <input id="n-precio" name="precio" type="number" step="0.01" min="0.01" value={nuevo.precio} required />
       </div>
       <div class="campo-admin">
-        <label for="n-stock">Piezas iniciales</label>
+        <label for="n-stock">{locale === 'en' ? 'Initial quantity' : 'Piezas iniciales'}</label>
         <input id="n-stock" name="stock" type="number" step="1" min="0" value={nuevo.stock || '0'} required />
       </div>
       <div class="campo-admin ancho">
-        <label for="n-imagen">URL de la imagen</label>
+        <label for="n-imagen">{locale === 'en' ? 'Image URL' : 'URL de la imagen'}</label>
         <input id="n-imagen" name="imagen" type="url" placeholder="https://…" value={nuevo.imagen} maxlength="255" required />
       </div>
-      <div class="ancho"><button class="btn-admin" type="submit">Agregar al inventario</button></div>
+      <div class="ancho"><button class="btn-admin" type="submit">{locale === 'en' ? 'Add to inventory' : 'Agregar al inventario'}</button></div>
     </form>
   </section>
 
-  <h3 class="section-title">Productos ({productos.length})</h3>
-  {productos.length === 0 && !error && <p class="estado-vacio">Todavía no hay productos. Agrega el primero arriba.</p>}
+  <h3 class="section-title">{locale === 'en' ? 'Products' : 'Productos'} ({productos.length})</h3>
+  {productos.length === 0 && !error && (
+    <p class="estado-vacio">{locale === 'en' ? 'There are no products yet. Add the first one above.' : 'Todavía no hay productos. Agrega el primero arriba.'}</p>
+  )}
 
   <div class="lista-productos">
     {
       productos.map((p) => {
         const nivel = nivelStock(p.stock);
+        const etiquetaNivel = locale === 'en'
+          ? p.stock <= 0 ? 'Sold out' : p.stock <= 5 ? `Low stock: ${p.stock}` : `${p.stock} in stock`
+          : nivel.etiqueta;
         return (
           <article class="producto-fila">
-            <img src={p.imagen} alt={p.nombre} loading="lazy" />
+            <img src={getSupabasePublicUrl(p.imagen) ?? p.imagen} alt={p.nombre} loading="lazy" />
             <div>
               <h4>{p.nombre}</h4>
               <div class="producto-meta">
                 <span>{precio(p.precio)}</span>
-                <span class={`badge badge-${nivel.clase}`}>{nivel.etiqueta}</span>
+                <span class={`badge badge-${nivel.clase}`}>{etiquetaNivel}</span>
                 <span>#{p.id}</span>
               </div>
             </div>
@@ -139,40 +157,51 @@ try {
               <form method="POST" class="form-inline">
                 <input type="hidden" name="accion" value="ajustar" />
                 <input type="hidden" name="id" value={p.id} />
-                <input type="number" name="cantidad" min="1" step="1" value="10" aria-label={`Piezas a agregar de ${p.nombre}`} required />
-                <button class="btn-admin" type="submit">+ Reabastecer</button>
+                <input
+                  type="number"
+                  name="cantidad"
+                  min="1"
+                  step="1"
+                  value="10"
+                  aria-label={locale === 'en' ? `Quantity to add for ${p.nombre}` : `Piezas a agregar de ${p.nombre}`}
+                  required
+                />
+                <button class="btn-admin" type="submit">{locale === 'en' ? '+ Restock' : '+ Reabastecer'}</button>
               </form>
               <div class="fila">
-                <form method="POST" data-confirmar={`¿Eliminar "${p.nombre}" del catálogo?`}>
+                <form
+                  method="POST"
+                  data-confirmar={locale === 'en' ? `Remove "${p.nombre}" from the catalog?` : `¿Eliminar "${p.nombre}" del catálogo?`}
+                >
                   <input type="hidden" name="accion" value="eliminar" />
                   <input type="hidden" name="id" value={p.id} />
-                  <button class="btn-admin peligro" type="submit">Eliminar</button>
+                  <button class="btn-admin peligro" type="submit">{locale === 'en' ? 'Remove' : 'Eliminar'}</button>
                 </form>
               </div>
             </div>
 
             <details>
-              <summary>Editar datos</summary>
+              <summary>{locale === 'en' ? 'Edit details' : 'Editar datos'}</summary>
               <form method="POST" class="form-grid">
                 <input type="hidden" name="accion" value="actualizar" />
                 <input type="hidden" name="id" value={p.id} />
                 <div class="campo-admin">
-                  <label for={`e-nombre-${p.id}`}>Nombre</label>
+                  <label for={`e-nombre-${p.id}`}>{locale === 'en' ? 'Name' : 'Nombre'}</label>
                   <input id={`e-nombre-${p.id}`} name="nombre" value={p.nombre} maxlength="100" required />
                 </div>
                 <div class="campo-admin">
-                  <label for={`e-precio-${p.id}`}>Precio (MXN)</label>
+                  <label for={`e-precio-${p.id}`}>{locale === 'en' ? 'Price (MXN)' : 'Precio (MXN)'}</label>
                   <input id={`e-precio-${p.id}`} name="precio" type="number" step="0.01" min="0.01" value={p.precio} required />
                 </div>
                 <div class="campo-admin">
-                  <label for={`e-stock-${p.id}`}>Existencias</label>
+                  <label for={`e-stock-${p.id}`}>{locale === 'en' ? 'Quantity' : 'Existencias'}</label>
                   <input id={`e-stock-${p.id}`} name="stock" type="number" step="1" min="0" value={p.stock} required />
                 </div>
                 <div class="campo-admin ancho">
-                  <label for={`e-imagen-${p.id}`}>URL de la imagen</label>
+                  <label for={`e-imagen-${p.id}`}>{locale === 'en' ? 'Image URL' : 'URL de la imagen'}</label>
                   <input id={`e-imagen-${p.id}`} name="imagen" type="url" value={p.imagen} maxlength="255" required />
                 </div>
-                <div class="ancho"><button class="btn-admin" type="submit">Guardar cambios</button></div>
+                <div class="ancho"><button class="btn-admin" type="submit">{locale === 'en' ? 'Save changes' : 'Guardar cambios'}</button></div>
               </form>
             </details>
           </article>

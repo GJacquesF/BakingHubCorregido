@@ -1,16 +1,24 @@
 ---
 import { CATEGORIAS } from '../lib/categorias';
+import { localizedPath } from '../lib/i18n';
 
 interface Props {
   activa?: string;
 }
 
 const { activa } = Astro.props;
-const href = (categoria: string) => (categoria === 'Todas' ? '/' : `/categoria/${encodeURIComponent(categoria)}`);
+const locale = Astro.currentLocale === 'en' ? 'en' : 'es';
+const strings = locale === 'en'
+  ? { heading: 'Categories', all: 'All', viewAll: 'View all' }
+  : { heading: 'Categorías', all: 'Todas', viewAll: 'Ver todo' };
+const href = (categoria: string) => localizedPath(
+  locale,
+  categoria === 'Todas' ? '/' : `/categoria/${encodeURIComponent(categoria)}`,
+);
 ---
 
 <aside class="side-bar">
-  <h3>Categorías</h3>
+  <h3>{strings.heading}</h3>
   <ul class="category-list">
     {
       CATEGORIAS.map((categoria) => (
@@ -20,7 +28,11 @@ const href = (categoria: string) => (categoria === 'Todas' ? '/' : `/categoria/$
             href={href(categoria)}
             aria-current={activa === categoria ? 'page' : undefined}
           >
-            {categoria === 'Todas' ? 'Ver todo' : categoria}
+            {categoria === 'Todas'
+              ? strings.viewAll
+              : locale === 'en' && categoria === 'Panadería'
+                ? 'Bakery'
+                : categoria}
           </a>
         </li>
       ))
